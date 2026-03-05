@@ -445,17 +445,29 @@ end
 -- FastShot
 local fastShotEnabled = false
 
+local originalValues = {}
+
 local function applyFastShot(enabled)
     task.spawn(function()
         for _, gcVal in pairs(getgc(true)) do
             if type(gcVal) == "table" then
-                if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = enabled and 0 or nil end
-                if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = enabled and 0 or nil end
-                if rawget(gcVal, "ShootRecoil") then gcVal["ShootRecoil"] = enabled and 0 or nil end
-                if rawget(gcVal, "AttackCooldown") then gcVal["AttackCooldown"] = enabled and 0.1 or nil end
-                if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = enabled and 0.05 or nil end
-                if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = enabled and 0.05 or nil end
-                if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = enabled and 0 or nil end
+                if enabled then
+                    if rawget(gcVal, "ShootCooldown") then originalValues["ShootCooldown"] = originalValues["ShootCooldown"] or gcVal["ShootCooldown"] gcVal["ShootCooldown"] = 0 end
+                    if rawget(gcVal, "ShootSpread") then originalValues["ShootSpread"] = originalValues["ShootSpread"] or gcVal["ShootSpread"] gcVal["ShootSpread"] = 0 end
+                    if rawget(gcVal, "ShootRecoil") then originalValues["ShootRecoil"] = originalValues["ShootRecoil"] or gcVal["ShootRecoil"] gcVal["ShootRecoil"] = 0 end
+                    if rawget(gcVal, "AttackCooldown") then originalValues["AttackCooldown"] = originalValues["AttackCooldown"] or gcVal["AttackCooldown"] gcVal["AttackCooldown"] = 0.1 end
+                    if rawget(gcVal, "HeavyAttackCooldown") then originalValues["HeavyAttackCooldown"] = originalValues["HeavyAttackCooldown"] or gcVal["HeavyAttackCooldown"] gcVal["HeavyAttackCooldown"] = 0.05 end
+                    if rawget(gcVal, "DashCooldown") then originalValues["DashCooldown"] = originalValues["DashCooldown"] or gcVal["DashCooldown"] gcVal["DashCooldown"] = 0.05 end
+                    if rawget(gcVal, "BladeCooldown") then originalValues["BladeCooldown"] = originalValues["BladeCooldown"] or gcVal["BladeCooldown"] gcVal["BladeCooldown"] = 0 end
+                else
+                    if rawget(gcVal, "ShootCooldown") and originalValues["ShootCooldown"] then gcVal["ShootCooldown"] = originalValues["ShootCooldown"] end
+                    if rawget(gcVal, "ShootSpread") and originalValues["ShootSpread"] then gcVal["ShootSpread"] = originalValues["ShootSpread"] end
+                    if rawget(gcVal, "ShootRecoil") and originalValues["ShootRecoil"] then gcVal["ShootRecoil"] = originalValues["ShootRecoil"] end
+                    if rawget(gcVal, "AttackCooldown") and originalValues["AttackCooldown"] then gcVal["AttackCooldown"] = originalValues["AttackCooldown"] end
+                    if rawget(gcVal, "HeavyAttackCooldown") and originalValues["HeavyAttackCooldown"] then gcVal["HeavyAttackCooldown"] = originalValues["HeavyAttackCooldown"] end
+                    if rawget(gcVal, "DashCooldown") and originalValues["DashCooldown"] then gcVal["DashCooldown"] = originalValues["DashCooldown"] end
+                    if rawget(gcVal, "BladeCooldown") and originalValues["BladeCooldown"] then gcVal["BladeCooldown"] = originalValues["BladeCooldown"] end
+                end
             end
         end
     end)
