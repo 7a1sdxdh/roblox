@@ -170,10 +170,13 @@ _G.Pages = Pages
 
 local pageNames = {"Combat", "Ignore", "Movement", "Visual", "Settings"}
 for _, name in ipairs(pageNames) do
-    local page = Instance.new("Frame")
+    local page = Instance.new("ScrollingFrame")
     page.Size = UDim2.new(1, 0, 1, -75)
     page.Position = UDim2.new(0, 0, 0, 75)
     page.BackgroundTransparency = 1
+    page.ScrollBarThickness = 4
+    page.ScrollBarImageColor3 = Color3.fromRGB(150, 120, 255)
+    page.CanvasSize = UDim2.new(0, 0, 0, 500)
     page.ClipsDescendants = true
     page.Visible = name == "Combat"
     page.Parent = ContentFrame
