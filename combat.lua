@@ -90,7 +90,7 @@ local function createSwitchButton(parent, text, yPos)
 end
 
 local function GetTargetUnderCrosshair()
-    if checkTeam(player) then return nil end
+    if player and checkTeam(player) then continue end
     if not LocalPlayer.Character then return nil end
     local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 500)
     local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
@@ -105,7 +105,7 @@ local function GetTargetUnderCrosshair()
 end
 
 local function GetClosestTarget()
-    if checkTeam(player) then continue end
+    if player and checkTeam(player) then continue end
     if not LocalPlayer.Character then return nil end
     local closest, shortest = nil, AimbotSettings.FOV
     local mousePos = Vector2.new(Mouse.X, Mouse.Y + 58)
@@ -140,7 +140,7 @@ local function GetClosestTarget()
 end
 
 local function GetClosestEnemyForTeleportAim()
-    if checkTeam(player) then continue end
+    if player and checkTeam(player) then continue end
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return nil end
     local myPos = LocalPlayer.Character.HumanoidRootPart.Position
     local closest, shortest = nil, math.huge
@@ -159,7 +159,7 @@ local function GetClosestEnemyForTeleportAim()
 end
 
 local function GetClosestEnemy()
-    if checkTeam(player) then continue end
+    if player and checkTeam(player) then continue end
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return nil end
     local myPos = LocalPlayer.Character.HumanoidRootPart.Position
     local closest, shortest = nil, math.huge
