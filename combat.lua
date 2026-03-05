@@ -173,10 +173,10 @@ local function FindClearPosition(targetPos)
 end
 
 -- Triggerbot 루프
-spawn(function()
+task.spawn(function()
     local isHolding = false
     local currentTarget = nil
-    while wait(0.01) do
+    while task.wait(0.01) do
         if triggerbotEnabled then
             local target = GetTargetUnderCrosshair()
             if target and target == currentTarget then
