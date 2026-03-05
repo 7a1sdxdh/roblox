@@ -29,6 +29,18 @@ fovCircle.Transparency = 0.75
 fovCircle.Visible = false
 fovCircle.Color = theme.fovColor
 
+local function checkTeam(p)
+    -- Attribute TeamID 확인 (우선)
+    local myTeam = LocalPlayer:GetAttribute("TeamID")
+    local theirTeam = p:GetAttribute("TeamID")
+    if myTeam and theirTeam and myTeam == theirTeam then return true end
+    
+    -- 기본 Team 확인 (대체)
+    if p.Team and LocalPlayer.Team and p.Team == LocalPlayer.Team then return true end
+    
+    return false -- 적
+end
+
 local function animateSwitch(switchBg, switchBtn, state)
     TweenService:Create(switchBtn, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = state and UDim2.new(1,-22,0,2) or UDim2.new(0,2,0,2)}):Play()
     TweenService:Create(switchBg, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = state and theme.switchOn or theme.switchOff}):Play()
@@ -78,6 +90,7 @@ local function createSwitchButton(parent, text, yPos)
 end
 
 local function GetTargetUnderCrosshair()
+    if checkTeam(player) then return nil end
     if not LocalPlayer.Character then return nil end
     local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 500)
     local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
@@ -92,6 +105,7 @@ local function GetTargetUnderCrosshair()
 end
 
 local function GetClosestTarget()
+    if checkTeam(player) then continue end
     if not LocalPlayer.Character then return nil end
     local closest, shortest = nil, AimbotSettings.FOV
     local mousePos = Vector2.new(Mouse.X, Mouse.Y + 58)
@@ -126,6 +140,7 @@ local function GetClosestTarget()
 end
 
 local function GetClosestEnemyForTeleportAim()
+    if checkTeam(player) then continue end
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return nil end
     local myPos = LocalPlayer.Character.HumanoidRootPart.Position
     local closest, shortest = nil, math.huge
@@ -144,6 +159,7 @@ local function GetClosestEnemyForTeleportAim()
 end
 
 local function GetClosestEnemy()
+    if checkTeam(player) then continue end
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return nil end
     local myPos = LocalPlayer.Character.HumanoidRootPart.Position
     local closest, shortest = nil, math.huge
