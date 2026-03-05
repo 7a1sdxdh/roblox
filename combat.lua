@@ -443,35 +443,7 @@ util.Raycast = function(s, o, d, len, f, ft, viz)
 end
 
 -- FastShot
-local fastShotEnabled = false
-
-local originalValues = {}
-
-local function applyFastShot(enabled)
-    task.spawn(function()
-        for _, gcVal in pairs(getgc(true)) do
-            if type(gcVal) == "table" then
-                if enabled then
-                    if rawget(gcVal, "ShootCooldown") then originalValues["ShootCooldown"] = originalValues["ShootCooldown"] or gcVal["ShootCooldown"] gcVal["ShootCooldown"] = 0 end
-                    if rawget(gcVal, "ShootSpread") then originalValues["ShootSpread"] = originalValues["ShootSpread"] or gcVal["ShootSpread"] gcVal["ShootSpread"] = 0 end
-                    if rawget(gcVal, "ShootRecoil") then originalValues["ShootRecoil"] = originalValues["ShootRecoil"] or gcVal["ShootRecoil"] gcVal["ShootRecoil"] = 0 end
-                    if rawget(gcVal, "AttackCooldown") then originalValues["AttackCooldown"] = originalValues["AttackCooldown"] or gcVal["AttackCooldown"] gcVal["AttackCooldown"] = 0.1 end
-                    if rawget(gcVal, "HeavyAttackCooldown") then originalValues["HeavyAttackCooldown"] = originalValues["HeavyAttackCooldown"] or gcVal["HeavyAttackCooldown"] gcVal["HeavyAttackCooldown"] = 0.05 end
-                    if rawget(gcVal, "DashCooldown") then originalValues["DashCooldown"] = originalValues["DashCooldown"] or gcVal["DashCooldown"] gcVal["DashCooldown"] = 0.05 end
-                    if rawget(gcVal, "BladeCooldown") then originalValues["BladeCooldown"] = originalValues["BladeCooldown"] or gcVal["BladeCooldown"] gcVal["BladeCooldown"] = 0 end
-                else
-                    if rawget(gcVal, "ShootCooldown") and originalValues["ShootCooldown"] then gcVal["ShootCooldown"] = originalValues["ShootCooldown"] end
-                    if rawget(gcVal, "ShootSpread") and originalValues["ShootSpread"] then gcVal["ShootSpread"] = originalValues["ShootSpread"] end
-                    if rawget(gcVal, "ShootRecoil") and originalValues["ShootRecoil"] then gcVal["ShootRecoil"] = originalValues["ShootRecoil"] end
-                    if rawget(gcVal, "AttackCooldown") and originalValues["AttackCooldown"] then gcVal["AttackCooldown"] = originalValues["AttackCooldown"] end
-                    if rawget(gcVal, "HeavyAttackCooldown") and originalValues["HeavyAttackCooldown"] then gcVal["HeavyAttackCooldown"] = originalValues["HeavyAttackCooldown"] end
-                    if rawget(gcVal, "DashCooldown") and originalValues["DashCooldown"] then gcVal["DashCooldown"] = originalValues["DashCooldown"] end
-                    if rawget(gcVal, "BladeCooldown") and originalValues["BladeCooldown"] then gcVal["BladeCooldown"] = originalValues["BladeCooldown"] end
-                end
-            end
-        end
-    end)
-end
+local fastShotApplied = false
 
 -- 버튼 생성
 local SilentAimBtn, _, SilentAimSwitch, SilentAimSwitchBtn = createSwitchButton(CombatPage, "Silent Aim", 300)
@@ -483,9 +455,23 @@ SilentAimBtn.MouseButton1Click:Connect(function()
 end)
 
 FastShotBtn.MouseButton1Click:Connect(function()
-    fastShotEnabled = not fastShotEnabled
-    animateSwitch(FastShotSwitch, FastShotSwitchBtn, fastShotEnabled)
-    applyFastShot(fastShotEnabled)
+    if fastShotApplied then return end
+    fastShotApplied = true
+    animateSwitch(FastShotSwitch, FastShotSwitchBtn, true)
+    task.spawn(function()
+        for _, gcVal in pairs(getgc(true)) do
+            if type(gcVal) == "table" then
+                if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = 0 end
+                if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = 0 end
+                if rawget(gcVal, "ShootRecoil") then gcVal["ShootRecoil"] = 0 end
+                if rawget(gcVal, "AttackCooldown") then gcVal["AttackCooldown"] = 0.1 end
+                if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = 0.05 end
+                if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = 0.05 end
+                if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = 0 end
+            end
+        end
+        print("FastShot 적용 완료!")
+    end)
 end)
 
 print("Combat 로드 완료!")
