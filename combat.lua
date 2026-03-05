@@ -173,10 +173,10 @@ local function FindClearPosition(targetPos)
 end
 
 -- Triggerbot 루프
-task.spawn(function()
+spawn(function()
     local isHolding = false
     local currentTarget = nil
-    while task.wait(0.01) do
+    while wait(0.01) do
         if triggerbotEnabled then
             local target = GetTargetUnderCrosshair()
             if target and target == currentTarget then
@@ -379,18 +379,16 @@ TeleportBtn.MouseButton1Click:Connect(toggleTeleport)
 WallCheckBtn.MouseButton1Click:Connect(toggleWallCheck)
 WallAttackBtn.MouseButton1Click:Connect(toggleWallAttack)
 
--- Silent Aim (util.Raycast 후킹)
+-- Silent Aim
+local silentAimEnabled = false
 local rs = game:GetService("ReplicatedStorage")
-local ps = game:GetService("Players")
-local cam = workspace.CurrentCamera
 local util = require(rs.Modules.Utility)
-local lp = ps.LocalPlayer
 
 local function checkTeam(p)
-    local myTeam = lp:GetAttribute("TeamID")
+    local myTeam = LocalPlayer:GetAttribute("TeamID")
     local theirTeam = p:GetAttribute("TeamID")
     if myTeam and theirTeam and myTeam == theirTeam then return true end
-    if p.Team and lp.Team and p.Team == lp.Team then return true end
+    if p.Team and LocalPlayer.Team and p.Team == LocalPlayer.Team then return true end
     return false
 end
 
@@ -408,23 +406,22 @@ local function scan()
     end
 end
 
-local function closest()
-    local char = lp.Character
+local function closestSilent()
+    local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("Head") then return end
     scan()
     local best, dist = nil, 99999
-    local scr = cam.ViewportSize/2
-    local myHead = char.Head.Position
+    local scr = Camera.ViewportSize/2
     for _, v in pairs(ents) do
-        if v == lp.Character then continue end
+        if v == LocalPlayer.Character then continue end
         if not v:FindFirstChild("HumanoidRootPart") then continue end
         if not v:FindFirstChild("Head") then continue end
         local humanoid = v:FindFirstChildOfClass("Humanoid")
         if not humanoid then continue end
         if humanoid.Health <= 0 or humanoid:GetState() == Enum.HumanoidStateType.Dead then continue end
-        local player = ps:GetPlayerFromCharacter(v)
+        local player = Players:GetPlayerFromCharacter(v)
         if player and checkTeam(player) then continue end
-        local pos, vis = cam:WorldToViewportPoint(v.HumanoidRootPart.Position)
+        local pos, vis = Camera:WorldToViewportPoint(v.HumanoidRootPart.Position)
         if not vis then continue end
         local d = (Vector2.new(pos.X, pos.Y) - scr).Magnitude
         if d < dist then best = v dist = d end
@@ -434,31 +431,49 @@ end
 
 local old_ray = util.Raycast
 util.Raycast = function(s, o, d, len, f, ft, viz)
-    if len == 999 then
+    if silentAimEnabled and len == 999 then
         f = {} ft = Enum.RaycastFilterType.Exclude
-    end
-    local tgt = closest()
-    if len == 999 and tgt and tgt:FindFirstChild("Head") then
-        local hitpos = tgt.Head.Position
-        return {Position = hitpos, Distance = (hitpos - o).Magnitude, Instance = tgt.Head, Material = tgt.Head.Material, Normal = Vector3.yAxis}
+        local tgt = closestSilent()
+        if tgt and tgt:FindFirstChild("Head") then
+            local hitpos = tgt.Head.Position
+            return {Position = hitpos, Distance = (hitpos - o).Magnitude, Instance = tgt.Head, Material = tgt.Head.Material, Normal = Vector3.yAxis}
+        end
     end
     return old_ray(s, o, d, len, f, ft, viz)
 end
 
 -- FastShot
-local function toggleTableAttribute(attribute, value)
-    for _, gcVal in pairs(getgc(true)) do
-        if type(gcVal) == "table" and rawget(gcVal, attribute) then
-            gcVal[attribute] = value
+local fastShotEnabled = false
+
+local function applyFastShot(enabled)
+    task.spawn(function()
+        for _, gcVal in pairs(getgc(true)) do
+            if type(gcVal) == "table" then
+                if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = enabled and 0 or nil end
+                if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = enabled and 0 or nil end
+                if rawget(gcVal, "ShootRecoil") then gcVal["ShootRecoil"] = enabled and 0 or nil end
+                if rawget(gcVal, "AttackCooldown") then gcVal["AttackCooldown"] = enabled and 0.1 or nil end
+                if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = enabled and 0.05 or nil end
+                if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = enabled and 0.05 or nil end
+                if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = enabled and 0 or nil end
+            end
         end
-    end
+    end)
 end
-toggleTableAttribute("ShootCooldown", 0)
-toggleTableAttribute("ShootSpread", 0)
-toggleTableAttribute("ShootRecoil", 0)
-toggleTableAttribute("AttackCooldown", 0.1)
-toggleTableAttribute("HeavyAttackCooldown", 0.05)
-toggleTableAttribute("DashCooldown", 0.05)
-toggleTableAttribute("BladeCooldown", 0)
+
+-- 버튼 생성
+local SilentAimBtn, _, SilentAimSwitch, SilentAimSwitchBtn = createSwitchButton(CombatPage, "Silent Aim", 300)
+local FastShotBtn, _, FastShotSwitch, FastShotSwitchBtn = createSwitchButton(CombatPage, "Fast Shot", 350)
+
+SilentAimBtn.MouseButton1Click:Connect(function()
+    silentAimEnabled = not silentAimEnabled
+    animateSwitch(SilentAimSwitch, SilentAimSwitchBtn, silentAimEnabled)
+end)
+
+FastShotBtn.MouseButton1Click:Connect(function()
+    fastShotEnabled = not fastShotEnabled
+    animateSwitch(FastShotSwitch, FastShotSwitchBtn, fastShotEnabled)
+    applyFastShot(fastShotEnabled)
+end)
 
 print("Combat 로드 완료!")
