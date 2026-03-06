@@ -37,7 +37,6 @@ local function animateSwitch(switchBg, switchBtn, state)
         grad.Color = state and ColorSequence.new{ColorSequenceKeypoint.new(0,theme.switchOn),ColorSequenceKeypoint.new(1,Color3.fromRGB(100,80,200))} or ColorSequence.new{ColorSequenceKeypoint.new(0,theme.switchOff),ColorSequenceKeypoint.new(1,Color3.fromRGB(180,180,200))}
     end
 end
-print('combat 로드 1')
 local function createSwitchButton(parent, text, yPos)
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1,-20,0,40)
@@ -76,7 +75,6 @@ local function createSwitchButton(parent, text, yPos)
     container.MouseLeave:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.8}):Play() end)
     return clickDetector, label, switchBg, switchBtn
 end
-print('combat 로드 2')
 local function GetTargetUnderCrosshair()
     if not LocalPlayer.Character then return nil end
     local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 500)
@@ -90,7 +88,6 @@ local function GetTargetUnderCrosshair()
     end
     return nil
 end
-print('combat 로드 3')
 local function GetClosestTarget()
     if not LocalPlayer.Character then return nil end
     local closest, shortest = nil, AimbotSettings.FOV
@@ -124,7 +121,6 @@ local function GetClosestTarget()
     end
     return closest
 end
-print('combat 로드 4')
 local function GetClosestEnemyForTeleportAim()
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return nil end
     local myPos = LocalPlayer.Character.HumanoidRootPart.Position
@@ -142,7 +138,6 @@ local function GetClosestEnemyForTeleportAim()
     end
     return closest
 end
-print('combat 로드 5')
 local function GetClosestEnemy()
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return nil end
     local myPos = LocalPlayer.Character.HumanoidRootPart.Position
@@ -160,7 +155,6 @@ local function GetClosestEnemy()
     end
     return closest
 end
-print('combat 로드 6')
 local function FindClearPosition(targetPos)
     local directions = {Vector3.new(15,0,0),Vector3.new(-15,0,0),Vector3.new(0,0,15),Vector3.new(0,0,-15),Vector3.new(10,0,10),Vector3.new(-10,0,10),Vector3.new(10,0,-10),Vector3.new(-10,0,-10),Vector3.new(0,15,0)}
     for _, dir in ipairs(directions) do
@@ -171,7 +165,6 @@ local function FindClearPosition(targetPos)
     end
     return targetPos + Vector3.new(0,15,0)
 end
-print('combat 로드 7')
 -- Triggerbot 루프
 spawn(function()
     local isHolding = false
@@ -197,7 +190,6 @@ spawn(function()
         end
     end
 end)
-print('combat 로드 8')
 -- RenderStepped
 local NoclipSwitch, NoclipSwitchBtn, FlySwitch, FlySwitchBtn
 local TeleportSwitch, TeleportSwitchBtn, TeleportAimSwitch, TeleportAimSwitchBtn
@@ -264,7 +256,6 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-print('combat 로드 9')
 -- 버튼 생성
 local CombatPage = Pages.Combat
 local AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn = createSwitchButton(CombatPage, "Aimbot", 0)
@@ -292,7 +283,6 @@ local function toggleTriggerbot()
     animateSwitch(TriggerbotSwitch, TriggerbotSwitchBtn, triggerbotEnabled)
     if was and not triggerbotEnabled then pcall(function() mouse1release() end) end
 end
-print('combat 로드 10')
 local function toggleWallCheck()
     AimbotSettings.WallCheck = not AimbotSettings.WallCheck
     animateSwitch(WallCheckSwitch, WallCheckSwitchBtn, AimbotSettings.WallCheck)
@@ -315,7 +305,6 @@ local function toggleTeleport()
     end
 end
 _G.toggleTeleport = toggleTeleport
-print('combat 로드 11')
 local function toggleTeleportAim()
     teleportAimEnabled = not teleportAimEnabled
     animateSwitch(TeleportAimSwitch, TeleportAimSwitchBtn, teleportAimEnabled)
@@ -328,7 +317,6 @@ local function toggleTeleportAim()
     end
 end
 _G.toggleTeleportAim = toggleTeleportAim
-print('combat 로드 12')
 local function toggleWallAttack()
     wallAttackEnabled = not wallAttackEnabled
     animateSwitch(WallAttackSwitch, WallAttackSwitchBtn, wallAttackEnabled)
