@@ -197,7 +197,7 @@ spawn(function()
         end
     end
 end)
-print('로드8')
+print('로드8,9,10,11')
 -- RenderStepped
 local NoclipSwitch, NoclipSwitchBtn, FlySwitch, FlySwitchBtn
 local TeleportSwitch, TeleportSwitchBtn, TeleportAimSwitch, TeleportAimSwitchBtn
@@ -217,7 +217,7 @@ RunService.RenderStepped:Connect(function()
             end
         end
     end
-print('로드9')
+
     if teleportAimEnabled and LocalPlayer.Character then
         local targetChar = GetClosestEnemyForTeleportAim()
         if targetChar then
@@ -240,7 +240,7 @@ print('로드9')
             end
         end
     end
-print('로드10')
+
     if aimbotEnabled then
         fovCircle.Visible = true
         fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y+58)
@@ -248,7 +248,7 @@ print('로드10')
     else
         fovCircle.Visible = false
     end
-print('로드11')
+
     if aimbotEnabled and LocalPlayer.Character and not teleportEnabled and not teleportAimEnabled then
         local target = GetClosestTarget()
         if target then
