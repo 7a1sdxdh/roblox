@@ -5,7 +5,6 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
-print('main 로드 1')
 -- 공유 변수 (모든 모듈에서 접근 가능)
 _G.guiEnabled = true
 _G.espBoxEnabled = false
@@ -68,7 +67,6 @@ local theme = {
     gradientEnd = Color3.fromRGB(100, 200, 255)
 }
 _G.theme = theme
-print('main 로드 2')
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RivalsPremium"
 ScreenGui.ResetOnSpawn = false
@@ -99,7 +97,6 @@ local UIStroke = Instance.new("UIStroke")
 UIStroke.Color = theme.stroke
 UIStroke.Thickness = 3
 UIStroke.Parent = MainFrame
-print('main 로드 3')
 local MainGradient = Instance.new("UIGradient")
 MainGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, theme.gradientStart), ColorSequenceKeypoint.new(1, theme.gradientEnd)}
 MainGradient.Rotation = 45
@@ -133,7 +130,6 @@ SidebarTitle.TextColor3 = theme.title
 SidebarTitle.TextSize = 22
 SidebarTitle.Font = Enum.Font.GothamBlack
 SidebarTitle.Parent = Sidebar
-print('main 로드 4')
 local ContentFrame = Instance.new("Frame")
 ContentFrame.Size = UDim2.new(1, -160, 1, -20)
 ContentFrame.Position = UDim2.new(0, 160, 0, 10)
@@ -164,7 +160,6 @@ Stats.Font = Enum.Font.Gotham
 Stats.TextXAlignment = Enum.TextXAlignment.Left
 Stats.Parent = ContentFrame
 _G.Stats = Stats
-print('main 로드 5')
 local Pages = {}
 _G.Pages = Pages
 
@@ -185,7 +180,6 @@ end
 
 local menuButtons = {}
 _G.menuButtons = menuButtons
-print('main 로드 6')
 local loadedModules = {}
 local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
 
