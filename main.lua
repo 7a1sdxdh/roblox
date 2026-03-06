@@ -5,7 +5,7 @@ local TweenService = game:GetService("TweenService")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
-
+print('main 로드 1')
 -- 공유 변수 (모든 모듈에서 접근 가능)
 _G.guiEnabled = true
 _G.espBoxEnabled = false
@@ -68,7 +68,7 @@ local theme = {
     gradientEnd = Color3.fromRGB(100, 200, 255)
 }
 _G.theme = theme
-
+print('main 로드 2')
 local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "RivalsPremium"
 ScreenGui.ResetOnSpawn = false
@@ -99,7 +99,7 @@ local UIStroke = Instance.new("UIStroke")
 UIStroke.Color = theme.stroke
 UIStroke.Thickness = 3
 UIStroke.Parent = MainFrame
-
+print('main 로드 3')
 local MainGradient = Instance.new("UIGradient")
 MainGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, theme.gradientStart), ColorSequenceKeypoint.new(1, theme.gradientEnd)}
 MainGradient.Rotation = 45
@@ -133,7 +133,7 @@ SidebarTitle.TextColor3 = theme.title
 SidebarTitle.TextSize = 22
 SidebarTitle.Font = Enum.Font.GothamBlack
 SidebarTitle.Parent = Sidebar
-
+print('main 로드 4')
 local ContentFrame = Instance.new("Frame")
 ContentFrame.Size = UDim2.new(1, -160, 1, -20)
 ContentFrame.Position = UDim2.new(0, 160, 0, 10)
@@ -164,7 +164,7 @@ Stats.Font = Enum.Font.Gotham
 Stats.TextXAlignment = Enum.TextXAlignment.Left
 Stats.Parent = ContentFrame
 _G.Stats = Stats
-
+print('main 로드 5')
 local Pages = {}
 _G.Pages = Pages
 
@@ -185,7 +185,7 @@ end
 
 local menuButtons = {}
 _G.menuButtons = menuButtons
-
+print('main 로드 6')
 local loadedModules = {}
 local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
 
@@ -226,7 +226,7 @@ local function createMenuButton(text, yPos, pageName)
     btnStroke.Thickness = 1
     btnStroke.Transparency = 0.7
     btnStroke.Parent = button
-
+print('main 로드 7')
     button.MouseButton1Click:Connect(function()
         -- 클릭 애니메이션
         TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {Size = UDim2.new(1,-24,0,33)}):Play()
@@ -264,7 +264,7 @@ local function createMenuButton(text, yPos, pageName)
         TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = theme.btnActive}):Play()
         btnGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, theme.btnActive), ColorSequenceKeypoint.new(1, Color3.fromRGB(150,120,255))}
     end)
-
+print('main 로드 8')
     button.MouseEnter:Connect(function()
         if pageName ~= "Combat" then
             TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = theme.btnHover, Size = UDim2.new(1,-18,0,35)}):Play()
@@ -288,7 +288,7 @@ createMenuButton("Settings", 250, "Settings")
 
 -- Combat 페이지 처음에 자동 로드
 loadModule("Combat")
-
+print('main 로드 9')
 -- FPS/Ping 업데이트
 RunService.RenderStepped:Connect(function(deltaTime)
     local currentTime = tick()
@@ -322,7 +322,7 @@ UserInputService.InputBegan:Connect(function(input, gpe)
         if _G.toggleTeleportAim then _G.toggleTeleportAim() end
     end
 end)
-
+print('main 로드 10')
 Players.PlayerRemoving:Connect(function(plr)
     for _, tbl in pairs({_G.ActiveBoxes, _G.ActiveNames, _G.ActiveHealthBars, _G.ActiveLines}) do
         if tbl[plr] then tbl[plr]:Remove() tbl[plr] = nil end
@@ -336,7 +336,7 @@ Players.PlayerRemoving:Connect(function(plr)
         _G.teleportTarget = nil
     end
 end)
-
+print('main 로드 11')
 LocalPlayer.CharacterRemoving:Connect(function()
     _G.teleportEnabled = false
     _G.teleportTarget = nil
@@ -344,3 +344,4 @@ LocalPlayer.CharacterRemoving:Connect(function()
     if _G.infJumpConnection then _G.infJumpConnection:Disconnect() _G.infJumpConnection = nil end
     _G.infJumpEnabled = false
 end)
+print('main 로드완료!')
