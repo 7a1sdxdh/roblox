@@ -220,7 +220,7 @@ local function createMenuButton(text, yPos, pageName)
     btnStroke.Thickness = 1
     btnStroke.Transparency = 0.7
     btnStroke.Parent = button
-print('main 로드 7')
+    --여기에 메인  7
     button.MouseButton1Click:Connect(function()
         -- 클릭 애니메이션
         TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {Size = UDim2.new(1,-24,0,33)}):Play()
@@ -258,7 +258,7 @@ print('main 로드 7')
         TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = theme.btnActive}):Play()
         btnGradient.Color = ColorSequence.new{ColorSequenceKeypoint.new(0, theme.btnActive), ColorSequenceKeypoint.new(1, Color3.fromRGB(150,120,255))}
     end)
-print('main 로드 8')
+--여기에 메인 8
     button.MouseEnter:Connect(function()
         if pageName ~= "Combat" then
             TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {BackgroundColor3 = theme.btnHover, Size = UDim2.new(1,-18,0,35)}):Play()
