@@ -176,7 +176,7 @@ end
 spawn(function()
     local isHolding = false
     local currentTarget = nil
-    while wait(0.01) do
+    while wait(0.5) do
         if triggerbotEnabled then
             local target = GetTargetUnderCrosshair()
             if target and target == currentTarget then
