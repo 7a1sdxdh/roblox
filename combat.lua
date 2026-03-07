@@ -67,7 +67,6 @@ local function createSwitchButton(parent, text, yPos)
     container.Position = UDim2.new(0,10,0,yPos)
     container.BackgroundColor3 = theme.btnIdle
     container.BorderSizePixel = 0
-    container.Parent = parent
     Instance.new("UICorner", container).CornerRadius = UDim.new(0,8)
     
     --[[ 그라데이션 및 스트로크(선) 제거 테스트
@@ -109,6 +108,8 @@ local function createSwitchButton(parent, text, yPos)
     
     local clickDetector = Instance.new("TextButton", container)
     clickDetector.Size = UDim2.new(1,0,1,0) clickDetector.BackgroundTransparency = 1 clickDetector.Text = ""
+    
+    container.Parent = parent
     return clickDetector, label, switchBg, switchBtn
 end
 local function GetTargetUnderCrosshair()
@@ -296,25 +297,13 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 ]] -- RenderStepped 주석 끝
---버튼 생성 테스트를 위해 순차 로드 (딜레이 추가)
+--버튼 생성을 위해 변수만 사전 선언합니다 (이후 task.spawn에서 연결)
 local CombatPage = Pages.Combat
-local AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn = createSwitchButton(CombatPage, "Aimbot", 0)
-task.wait(0.05)
-local TriggerbotBtn, _, TriggerbotSwitch, TriggerbotSwitchBtn = createSwitchButton(CombatPage, "Triggerbot", 50)
-task.wait(0.05)
-local TeleportAimBtn, _, TeleportAimSwitch2, TeleportAimSwitchBtn2 = createSwitchButton(CombatPage, "Teleport Aim", 100)
-task.wait(0.05)
-local TeleportBtn, _, TeleportSwitch2, TeleportSwitchBtn2 = createSwitchButton(CombatPage, "Teleport to Enemy", 150)
-task.wait(0.05)
-local WallCheckBtn, _, WallCheckSwitch, WallCheckSwitchBtn = createSwitchButton(CombatPage, "Wall Check", 200)
-task.wait(0.05)
-local WallAttackBtn, _, WallAttackSwitch, WallAttackSwitchBtn = createSwitchButton(CombatPage, "Wall Attack", 250)
-task.wait(0.05)
-
-TeleportSwitch = TeleportSwitch2
-TeleportSwitchBtn = TeleportSwitchBtn2
-TeleportAimSwitch = TeleportAimSwitch2
-TeleportAimSwitchBtn = TeleportAimSwitchBtn2
+local AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn
+local TriggerbotBtn, TriggerbotSwitch, TriggerbotSwitchBtn
+local TeleportBtn, TeleportAimBtn
+local WallCheckBtn, WallCheckSwitch, WallCheckSwitchBtn
+local WallAttackBtn, WallAttackSwitch, WallAttackSwitchBtn
 
 -- Toggle 함수들
 local function toggleAimbot()
@@ -406,13 +395,6 @@ local function toggleWallAttack()
     end
 end
 print('combat 로드 13')
---UI 이벤트 연결 테스트를 위해 주석 처리
-AimbotBtn.MouseButton1Click:Connect(toggleAimbot)
-TriggerbotBtn.MouseButton1Click:Connect(toggleTriggerbot)
-TeleportAimBtn.MouseButton1Click:Connect(toggleTeleportAim)
-TeleportBtn.MouseButton1Click:Connect(toggleTeleport)
-WallCheckBtn.MouseButton1Click:Connect(toggleWallCheck)
-WallAttackBtn.MouseButton1Click:Connect(toggleWallAttack)
 
 -- Silent Aim
 local silentAimEnabled = false
@@ -482,39 +464,69 @@ print('combat 로드 17')
 -- FastShot
 local fastShotApplied = false
 
---추가 UI 버튼 순차 생성
-local SilentAimBtn, _, SilentAimSwitch, SilentAimSwitchBtn = createSwitchButton(CombatPage, "Silent Aim", 300)
-task.wait(0.05)
-local FastShotBtn, _, FastShotSwitch, FastShotSwitchBtn = createSwitchButton(CombatPage, "Fast Shot", 350)
-task.wait(0.05)
+-- 분산 로드 시작 (엔진 부하 방지용 task.spawn 구조 적용)
+task.spawn(function()
+    print("GUI 분산 로드 시작")
+    
+    AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn = createSwitchButton(CombatPage, "Aimbot", 0)
+    AimbotBtn.MouseButton1Click:Connect(toggleAimbot)
+    task.wait()
+    
+    TriggerbotBtn, _, TriggerbotSwitch, TriggerbotSwitchBtn = createSwitchButton(CombatPage, "Triggerbot", 50)
+    TriggerbotBtn.MouseButton1Click:Connect(toggleTriggerbot)
+    task.wait()
+    
+    TeleportAimBtn, _, TeleportAimSwitch, TeleportAimSwitchBtn = createSwitchButton(CombatPage, "Teleport Aim", 100)
+    TeleportAimBtn.MouseButton1Click:Connect(toggleTeleportAim)
+    task.wait()
+    
+    TeleportBtn, _, TeleportSwitch, TeleportSwitchBtn = createSwitchButton(CombatPage, "Teleport to Enemy", 150)
+    TeleportBtn.MouseButton1Click:Connect(toggleTeleport)
+    task.wait()
+    
+    WallCheckBtn, _, WallCheckSwitch, WallCheckSwitchBtn = createSwitchButton(CombatPage, "Wall Check", 200)
+    WallCheckBtn.MouseButton1Click:Connect(toggleWallCheck)
+    task.wait()
+    
+    WallAttackBtn, _, WallAttackSwitch, WallAttackSwitchBtn = createSwitchButton(CombatPage, "Wall Attack", 250)
+    WallAttackBtn.MouseButton1Click:Connect(toggleWallAttack)
+    task.wait()
 
-SilentAimBtn.MouseButton1Click:Connect(function()
-    silentAimEnabled = not silentAimEnabled
-    animateSwitch(SilentAimSwitch, SilentAimSwitchBtn, silentAimEnabled)
-end)
-print('combat 로드 18')
---[[ FastShot getgc 충돌 테스트를 위해 주석 처리
-FastShotBtn.MouseButton1Click:Connect(function()
-    if fastShotApplied then return end
-    fastShotApplied = true
-    animateSwitch(FastShotSwitch, FastShotSwitchBtn, true)
-    task.spawn(function()
-        for _, gcVal in pairs(getgc(true)) do
-            if type(gcVal) == "table" then
-                if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = 0 end
-                if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = 0 end
-                if rawget(gcVal, "ShootRecoil") then gcVal["ShootRecoil"] = 0 end
-                if rawget(gcVal, "AttackCooldown") then gcVal["AttackCooldown"] = 0.1 end
-                if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = 0.05 end
-                if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = 0.05 end
-                if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = 0 end
-            end
-        end
-        print("FastShot 적용 완료!")
+    local SilentAimBtn, _, SilentAimSwitch, SilentAimSwitchBtn = createSwitchButton(CombatPage, "Silent Aim", 300)
+    SilentAimBtn.MouseButton1Click:Connect(function()
+        silentAimEnabled = not silentAimEnabled
+        animateSwitch(SilentAimSwitch, SilentAimSwitchBtn, silentAimEnabled)
     end)
+    task.wait()
+
+    local FastShotBtn, _, FastShotSwitch, FastShotSwitchBtn = createSwitchButton(CombatPage, "Fast Shot", 350)
+    --[[ FastShot getgc 충돌 테스트를 위해 주석 처리
+    FastShotBtn.MouseButton1Click:Connect(function()
+        if fastShotApplied then return end
+        fastShotApplied = true
+        animateSwitch(FastShotSwitch, FastShotSwitchBtn, true)
+        task.spawn(function()
+            for _, gcVal in pairs(getgc(true)) do
+                if type(gcVal) == "table" then
+                    if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = 0 end
+                    if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = 0 end
+                    if rawget(gcVal, "ShootRecoil") then gcVal["ShootRecoil"] = 0 end
+                    if rawget(gcVal, "AttackCooldown") then gcVal["AttackCooldown"] = 0.1 end
+                    if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = 0.05 end
+                    if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = 0.05 end
+                    if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = 0 end
+                end
+            end
+            print("FastShot 적용 완료!")
+        end)
+    end)
+    ]]--
+    task.wait()
+
+    print("GUI 분산 로드 완료!")
 end)
-]]--
+
 print('combat 로드 19')
 
 print("Combat 로드 완료!")
-print("제발고처저라 좀 좀좀 아ㅏㅏㅏ")
+print("아직 할게 많다고요")
