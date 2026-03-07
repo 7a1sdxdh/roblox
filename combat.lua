@@ -263,7 +263,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 ]] -- RenderStepped 주석 끝
---[[ 버튼 생성 테스트를 위해 주석 처리
+--버튼 생성 테스트를 위해 주석 처리
 local CombatPage = Pages.Combat
 local AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn = createSwitchButton(CombatPage, "Aimbot", 0)
 local TriggerbotBtn, _, TriggerbotSwitch, TriggerbotSwitchBtn = createSwitchButton(CombatPage, "Triggerbot", 50)
@@ -276,7 +276,6 @@ TeleportSwitch = TeleportSwitch2
 TeleportSwitchBtn = TeleportSwitchBtn2
 TeleportAimSwitch = TeleportAimSwitch2
 TeleportAimSwitchBtn = TeleportAimSwitchBtn2
-]]--
 
 -- Toggle 함수들
 local function toggleAimbot()
@@ -368,14 +367,13 @@ local function toggleWallAttack()
     end
 end
 print('combat 로드 13')
---[[ UI 이벤트 연결 테스트를 위해 주석 처리
+--UI 이벤트 연결 테스트를 위해 주석 처리
 AimbotBtn.MouseButton1Click:Connect(toggleAimbot)
 TriggerbotBtn.MouseButton1Click:Connect(toggleTriggerbot)
 TeleportAimBtn.MouseButton1Click:Connect(toggleTeleportAim)
 TeleportBtn.MouseButton1Click:Connect(toggleTeleport)
 WallCheckBtn.MouseButton1Click:Connect(toggleWallCheck)
 WallAttackBtn.MouseButton1Click:Connect(toggleWallAttack)
-]]--
 
 -- Silent Aim
 local silentAimEnabled = false
@@ -445,7 +443,7 @@ print('combat 로드 17')
 -- FastShot
 local fastShotApplied = false
 
---[[ 추가 UI 버튼 테스트를 위해 주석 처리
+--추가 UI 버튼 테스트를 위해 주석 처리
 -- 버튼 생성
 local SilentAimBtn, _, SilentAimSwitch, SilentAimSwitchBtn = createSwitchButton(CombatPage, "Silent Aim", 300)
 local FastShotBtn, _, FastShotSwitch, FastShotSwitchBtn = createSwitchButton(CombatPage, "Fast Shot", 350)
@@ -475,5 +473,5 @@ FastShotBtn.MouseButton1Click:Connect(function()
     end)
 end)
 print('combat 로드 19')
-]]--
+
 print("Combat 로드 완료!")
