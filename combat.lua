@@ -296,14 +296,20 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 ]] -- RenderStepped 주석 끝
---버튼 생성 테스트를 위해 주석 처리
+--버튼 생성 테스트를 위해 순차 로드 (딜레이 추가)
 local CombatPage = Pages.Combat
 local AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn = createSwitchButton(CombatPage, "Aimbot", 0)
+task.wait(0.05)
 local TriggerbotBtn, _, TriggerbotSwitch, TriggerbotSwitchBtn = createSwitchButton(CombatPage, "Triggerbot", 50)
+task.wait(0.05)
 local TeleportAimBtn, _, TeleportAimSwitch2, TeleportAimSwitchBtn2 = createSwitchButton(CombatPage, "Teleport Aim", 100)
+task.wait(0.05)
 local TeleportBtn, _, TeleportSwitch2, TeleportSwitchBtn2 = createSwitchButton(CombatPage, "Teleport to Enemy", 150)
+task.wait(0.05)
 local WallCheckBtn, _, WallCheckSwitch, WallCheckSwitchBtn = createSwitchButton(CombatPage, "Wall Check", 200)
+task.wait(0.05)
 local WallAttackBtn, _, WallAttackSwitch, WallAttackSwitchBtn = createSwitchButton(CombatPage, "Wall Attack", 250)
+task.wait(0.05)
 
 TeleportSwitch = TeleportSwitch2
 TeleportSwitchBtn = TeleportSwitchBtn2
@@ -476,10 +482,11 @@ print('combat 로드 17')
 -- FastShot
 local fastShotApplied = false
 
---추가 UI 버튼 테스트를 위해 주석 처리
--- 버튼 생성
+--추가 UI 버튼 순차 생성
 local SilentAimBtn, _, SilentAimSwitch, SilentAimSwitchBtn = createSwitchButton(CombatPage, "Silent Aim", 300)
+task.wait(0.05)
 local FastShotBtn, _, FastShotSwitch, FastShotSwitchBtn = createSwitchButton(CombatPage, "Fast Shot", 350)
+task.wait(0.05)
 
 SilentAimBtn.MouseButton1Click:Connect(function()
     silentAimEnabled = not silentAimEnabled
@@ -510,4 +517,4 @@ end)
 print('combat 로드 19')
 
 print("Combat 로드 완료!")
-print("제발료")
+print("제발고처저라 좀 좀좀 아ㅏㅏㅏ")
