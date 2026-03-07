@@ -455,6 +455,7 @@ SilentAimBtn.MouseButton1Click:Connect(function()
     animateSwitch(SilentAimSwitch, SilentAimSwitchBtn, silentAimEnabled)
 end)
 print('combat 로드 18')
+--[[ FastShot getgc 충돌 테스트를 위해 주석 처리
 FastShotBtn.MouseButton1Click:Connect(function()
     if fastShotApplied then return end
     fastShotApplied = true
@@ -474,7 +475,8 @@ FastShotBtn.MouseButton1Click:Connect(function()
         print("FastShot 적용 완료!")
     end)
 end)
+]]--
 print('combat 로드 19')
 
 print("Combat 로드 완료!")
-print("qw")
+print("we")
