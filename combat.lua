@@ -24,7 +24,12 @@ local theme = _G.theme or {
     gradientStart = Color3.fromRGB(200, 150, 255),
     gradientEnd = Color3.fromRGB(100, 200, 255)
 }
-local Pages = _G.Pages or { Combat = Instance.new("Frame") }
+local Pages = _G.Pages
+if not Pages or not Pages.Combat then
+    warn("Warning: _G.Pages.Combat is fully missing, waiting for main.lua to initialize it...")
+    repeat task.wait(0.1) until _G.Pages and _G.Pages.Combat
+    Pages = _G.Pages
+end
 local AimbotSettings = _G.AimbotSettings or { FOV = 100, Smoothness = 0.5, Prediction = 0.1, Part = "Head", WallCheck = false }
 local TriggerbotSettings = _G.TriggerbotSettings or { Delay = 0.05, TeamCheck = true }
 local ignoredPlayers = _G.ignoredPlayers or {}
@@ -57,7 +62,6 @@ local function animateSwitch(switchBg, switchBtn, state)
     end
 end
 local function createSwitchButton(parent, text, yPos)
-    --[[ 버튼 생성 UI 충돌 방지를 위해 전부 가짜 객체로 대체
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1,-20,0,40)
     container.Position = UDim2.new(0,10,0,yPos)
@@ -65,44 +69,46 @@ local function createSwitchButton(parent, text, yPos)
     container.BorderSizePixel = 0
     container.Parent = parent
     Instance.new("UICorner", container).CornerRadius = UDim.new(0,8)
+    
+    --[[ 그라데이션 및 스트로크(선) 제거 테스트
     local cg = Instance.new("UIGradient", container)
     cg.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.fromRGB(250,250,255)),ColorSequenceKeypoint.new(1,theme.btnIdle)}
     cg.Rotation = 90
     local cs = Instance.new("UIStroke", container)
     cs.Color = theme.stroke cs.Thickness = 1 cs.Transparency = 0.8
+    ]]--
+    
     local label = Instance.new("TextLabel", container)
     label.Size = UDim2.new(1,-60,1,0) label.Position = UDim2.new(0,15,0,0)
     label.BackgroundTransparency = 1 label.Text = text label.TextColor3 = theme.btnText
     label.Font = Enum.Font.GothamBold label.TextSize = 13 label.TextXAlignment = Enum.TextXAlignment.Left
+    
     local switchBg = Instance.new("Frame", container)
     switchBg.Size = UDim2.new(0,50,0,24) switchBg.Position = UDim2.new(1,-60,0.5,-12)
     switchBg.BackgroundColor3 = theme.switchOff switchBg.BorderSizePixel = 0
+    switchBg.Parent = container  -- 부모 명시
     Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1,0)
+    
+    --[[
     local sg = Instance.new("UIGradient", switchBg)
     sg.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,theme.switchOff),ColorSequenceKeypoint.new(1,Color3.fromRGB(180,180,200))}
     sg.Rotation = 90
     local ss = Instance.new("UIStroke", switchBg)
     ss.Color = theme.stroke ss.Thickness = 1 ss.Transparency = 0.6
+    ]]--
+    
     local switchBtn = Instance.new("Frame", switchBg)
     switchBtn.Size = UDim2.new(0,20,0,20) switchBtn.Position = UDim2.new(0,2,0,2)
     switchBtn.BackgroundColor3 = Color3.fromRGB(255,255,255) switchBtn.BorderSizePixel = 0
     Instance.new("UICorner", switchBtn).CornerRadius = UDim.new(1,0)
+    
+    --[[
     local sbs = Instance.new("UIStroke", switchBtn)
     sbs.Color = theme.accent sbs.Thickness = 2 sbs.Transparency = 0.5
-    local clickDetector = Instance.new("TextButton", container)
-    clickDetector.Size = UDim2.new(1,0,1,0) clickDetector.BackgroundTransparency = 1 clickDetector.Text = ""
-    -- TweenService 충돌 방지를 위해 주석 처리
-    -- container.MouseEnter:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.5}):Play() end)
-    -- container.MouseLeave:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.8}):Play() end)
-    
-    return clickDetector, label, switchBg, switchBtn
     ]]--
     
-    -- 에러 방지용 가짜 버튼 반환 (UI를 아예 생성하지 않음)
-    local clickDetector = { MouseButton1Click = { Connect = function() end } }
-    local label = {}
-    local switchBg = { FindFirstChildOfClass = function() return nil end }
-    local switchBtn = {}
+    local clickDetector = Instance.new("TextButton", container)
+    clickDetector.Size = UDim2.new(1,0,1,0) clickDetector.BackgroundTransparency = 1 clickDetector.Text = ""
     return clickDetector, label, switchBg, switchBtn
 end
 local function GetTargetUnderCrosshair()
@@ -504,4 +510,4 @@ end)
 print('combat 로드 19')
 
 print("Combat 로드 완료!")
-print("제발 멈추지 마ㅏㅏㅏㅏㅏ")
+print("제발료")
