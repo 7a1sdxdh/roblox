@@ -369,6 +369,7 @@ WallAttackBtn.MouseButton1Click:Connect(toggleWallAttack)
 
 -- Silent Aim
 local silentAimEnabled = false
+--[[ 테스트를 위해 사일런트 에임 관련 부분 주석 처리
 local rs = game:GetService("ReplicatedStorage")
 local util = require(rs.Modules.Utility)
 
@@ -429,6 +430,7 @@ util.Raycast = function(s, o, d, len, f, ft, viz)
     end
     return old_ray(s, o, d, len, f, ft, viz)
 end
+]]-- 테스트 주석 끝
 print('combat 로드 17')
 -- FastShot
 local fastShotApplied = false
