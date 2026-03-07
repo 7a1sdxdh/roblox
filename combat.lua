@@ -477,3 +477,4 @@ end)
 print('combat 로드 19')
 
 print("Combat 로드 완료!")
+print("qw")
