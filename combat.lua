@@ -74,8 +74,10 @@ local function createSwitchButton(parent, text, yPos)
     sbs.Color = theme.accent sbs.Thickness = 2 sbs.Transparency = 0.5
     local clickDetector = Instance.new("TextButton", container)
     clickDetector.Size = UDim2.new(1,0,1,0) clickDetector.BackgroundTransparency = 1 clickDetector.Text = ""
+    --[[ TweenService 충돌 방지를 위해 주석 처리
     container.MouseEnter:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.5}):Play() end)
     container.MouseLeave:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.8}):Play() end)
+    ]]--
     return clickDetector, label, switchBg, switchBtn
 end
 local function GetTargetUnderCrosshair()
