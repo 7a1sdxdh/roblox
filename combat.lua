@@ -67,47 +67,51 @@ local function createSwitchButton(parent, text, yPos)
     container.Position = UDim2.new(0,10,0,yPos)
     container.BackgroundColor3 = theme.btnIdle
     container.BorderSizePixel = 0
-    Instance.new("UICorner", container).CornerRadius = UDim.new(0,8)
     
-    --[[ 그라데이션 및 스트로크(선) 제거 테스트
-    local cg = Instance.new("UIGradient", container)
-    cg.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.fromRGB(250,250,255)),ColorSequenceKeypoint.new(1,theme.btnIdle)}
-    cg.Rotation = 90
-    local cs = Instance.new("UIStroke", container)
-    cs.Color = theme.stroke cs.Thickness = 1 cs.Transparency = 0.8
-    ]]--
+    local corner1 = Instance.new("UICorner")
+    corner1.CornerRadius = UDim.new(0,8)
+    corner1.Parent = container
     
-    local label = Instance.new("TextLabel", container)
-    label.Size = UDim2.new(1,-60,1,0) label.Position = UDim2.new(0,15,0,0)
-    label.BackgroundTransparency = 1 label.Text = text label.TextColor3 = theme.btnText
-    label.Font = Enum.Font.GothamBold label.TextSize = 13 label.TextXAlignment = Enum.TextXAlignment.Left
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1,-60,1,0) 
+    label.Position = UDim2.new(0,15,0,0)
+    label.BackgroundTransparency = 1 
+    label.Text = text 
+    label.TextColor3 = theme.btnText
+    label.Font = Enum.Font.SourceSansBold -- 폰트 로드 크래시 방지용으로 가장 안전한 폰트로 변경
+    label.TextSize = 13 
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
     
-    local switchBg = Instance.new("Frame", container)
-    switchBg.Size = UDim2.new(0,50,0,24) switchBg.Position = UDim2.new(1,-60,0.5,-12)
-    switchBg.BackgroundColor3 = theme.switchOff switchBg.BorderSizePixel = 0
-    switchBg.Parent = container  -- 부모 명시
-    Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1,0)
+    local switchBg = Instance.new("Frame")
+    switchBg.Size = UDim2.new(0,50,0,24) 
+    switchBg.Position = UDim2.new(1,-60,0.5,-12)
+    switchBg.BackgroundColor3 = theme.switchOff 
+    switchBg.BorderSizePixel = 0
     
-    --[[
-    local sg = Instance.new("UIGradient", switchBg)
-    sg.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,theme.switchOff),ColorSequenceKeypoint.new(1,Color3.fromRGB(180,180,200))}
-    sg.Rotation = 90
-    local ss = Instance.new("UIStroke", switchBg)
-    ss.Color = theme.stroke ss.Thickness = 1 ss.Transparency = 0.6
-    ]]--
+    local corner2 = Instance.new("UICorner")
+    corner2.CornerRadius = UDim.new(1,0)
+    corner2.Parent = switchBg
     
-    local switchBtn = Instance.new("Frame", switchBg)
-    switchBtn.Size = UDim2.new(0,20,0,20) switchBtn.Position = UDim2.new(0,2,0,2)
-    switchBtn.BackgroundColor3 = Color3.fromRGB(255,255,255) switchBtn.BorderSizePixel = 0
-    Instance.new("UICorner", switchBtn).CornerRadius = UDim.new(1,0)
+    local switchBtn = Instance.new("Frame")
+    switchBtn.Size = UDim2.new(0,20,0,20) 
+    switchBtn.Position = UDim2.new(0,2,0,2)
+    switchBtn.BackgroundColor3 = Color3.fromRGB(255,255,255) 
+    switchBtn.BorderSizePixel = 0
     
-    --[[
-    local sbs = Instance.new("UIStroke", switchBtn)
-    sbs.Color = theme.accent sbs.Thickness = 2 sbs.Transparency = 0.5
-    ]]--
+    local corner3 = Instance.new("UICorner")
+    corner3.CornerRadius = UDim.new(1,0)
+    corner3.Parent = switchBtn
     
-    local clickDetector = Instance.new("TextButton", container)
-    clickDetector.Size = UDim2.new(1,0,1,0) clickDetector.BackgroundTransparency = 1 clickDetector.Text = ""
+    -- 계층 조립
+    switchBtn.Parent = switchBg
+    switchBg.Parent = container
+    
+    local clickDetector = Instance.new("TextButton")
+    clickDetector.Size = UDim2.new(1,0,1,0) 
+    clickDetector.BackgroundTransparency = 1 
+    clickDetector.Text = ""
+    clickDetector.Parent = container
     
     container.Parent = parent
     return clickDetector, label, switchBg, switchBtn
@@ -528,5 +532,4 @@ end)
 
 print('combat 로드 19')
 
-print("Combat 로드 완료!")
-print("아직 할게 많다고요")
+print("Combat 로드 완1료!")
