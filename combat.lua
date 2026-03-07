@@ -7,11 +7,27 @@ local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
 
-local theme = _G.theme
-local Pages = _G.Pages
-local AimbotSettings = _G.AimbotSettings
-local TriggerbotSettings = _G.TriggerbotSettings
-local ignoredPlayers = _G.ignoredPlayers
+local theme = _G.theme or {
+    bg = Color3.fromRGB(240, 240, 250),
+    sidebar = Color3.fromRGB(250, 250, 255),
+    stroke = Color3.fromRGB(200, 180, 255),
+    title = Color3.fromRGB(100, 70, 200),
+    text = Color3.fromRGB(80, 80, 120),
+    btnIdle = Color3.fromRGB(230, 230, 245),
+    btnActive = Color3.fromRGB(180, 160, 255),
+    btnHover = Color3.fromRGB(210, 200, 250),
+    btnText = Color3.fromRGB(70, 50, 150),
+    fovColor = Color3.fromRGB(150, 100, 255),
+    switchOff = Color3.fromRGB(200, 200, 220),
+    switchOn = Color3.fromRGB(130, 100, 255),
+    accent = Color3.fromRGB(150, 120, 255),
+    gradientStart = Color3.fromRGB(200, 150, 255),
+    gradientEnd = Color3.fromRGB(100, 200, 255)
+}
+local Pages = _G.Pages or { Combat = Instance.new("Frame") }
+local AimbotSettings = _G.AimbotSettings or { FOV = 100, Smoothness = 0.5, Prediction = 0.1, Part = "Head", WallCheck = false }
+local TriggerbotSettings = _G.TriggerbotSettings or { Delay = 0.05, TeamCheck = true }
+local ignoredPlayers = _G.ignoredPlayers or {}
 
 local aimbotEnabled = false
 local triggerbotEnabled = false
@@ -41,6 +57,7 @@ local function animateSwitch(switchBg, switchBtn, state)
     end
 end
 local function createSwitchButton(parent, text, yPos)
+    --[[ 버튼 생성 UI 충돌 방지를 위해 전부 가짜 객체로 대체
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1,-20,0,40)
     container.Position = UDim2.new(0,10,0,yPos)
@@ -74,10 +91,18 @@ local function createSwitchButton(parent, text, yPos)
     sbs.Color = theme.accent sbs.Thickness = 2 sbs.Transparency = 0.5
     local clickDetector = Instance.new("TextButton", container)
     clickDetector.Size = UDim2.new(1,0,1,0) clickDetector.BackgroundTransparency = 1 clickDetector.Text = ""
-    --[[ TweenService 충돌 방지를 위해 주석 처리
-    container.MouseEnter:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.5}):Play() end)
-    container.MouseLeave:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.8}):Play() end)
+    -- TweenService 충돌 방지를 위해 주석 처리
+    -- container.MouseEnter:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.5}):Play() end)
+    -- container.MouseLeave:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.8}):Play() end)
+    
+    return clickDetector, label, switchBg, switchBtn
     ]]--
+    
+    -- 에러 방지용 가짜 버튼 반환 (UI를 아예 생성하지 않음)
+    local clickDetector = { MouseButton1Click = { Connect = function() end } }
+    local label = {}
+    local switchBg = { FindFirstChildOfClass = function() return nil end }
+    local switchBtn = {}
     return clickDetector, label, switchBg, switchBtn
 end
 local function GetTargetUnderCrosshair()
@@ -479,4 +504,4 @@ end)
 print('combat 로드 19')
 
 print("Combat 로드 완료!")
-print("we")
+print("제발 멈추지 마ㅏㅏㅏㅏㅏ")
