@@ -20,6 +20,7 @@ local teleportAimEnabled = false
 local teleportTarget = nil
 local wallAttackEnabled = false
 
+--[[ Drawing API 테스트를 위해 주석 처리
 local fovCircle = Drawing.new("Circle")
 fovCircle.Thickness = 2
 fovCircle.NumSides = 100
@@ -28,6 +29,8 @@ fovCircle.Filled = false
 fovCircle.Transparency = 0.75
 fovCircle.Visible = false
 fovCircle.Color = theme.fovColor
+]]--
+local fovCircle = { Visible = false } -- 에러 방지용 가짜 객체
 
 local function animateSwitch(switchBg, switchBtn, state)
     TweenService:Create(switchBtn, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = state and UDim2.new(1,-22,0,2) or UDim2.new(0,2,0,2)}):Play()
@@ -260,7 +263,7 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 ]] -- RenderStepped 주석 끝
--- 버튼 생성
+--[[ 버튼 생성 테스트를 위해 주석 처리
 local CombatPage = Pages.Combat
 local AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn = createSwitchButton(CombatPage, "Aimbot", 0)
 local TriggerbotBtn, _, TriggerbotSwitch, TriggerbotSwitchBtn = createSwitchButton(CombatPage, "Triggerbot", 50)
@@ -273,6 +276,7 @@ TeleportSwitch = TeleportSwitch2
 TeleportSwitchBtn = TeleportSwitchBtn2
 TeleportAimSwitch = TeleportAimSwitch2
 TeleportAimSwitchBtn = TeleportAimSwitchBtn2
+]]--
 
 -- Toggle 함수들
 local function toggleAimbot()
@@ -364,12 +368,14 @@ local function toggleWallAttack()
     end
 end
 print('combat 로드 13')
+--[[ UI 이벤트 연결 테스트를 위해 주석 처리
 AimbotBtn.MouseButton1Click:Connect(toggleAimbot)
 TriggerbotBtn.MouseButton1Click:Connect(toggleTriggerbot)
 TeleportAimBtn.MouseButton1Click:Connect(toggleTeleportAim)
 TeleportBtn.MouseButton1Click:Connect(toggleTeleport)
 WallCheckBtn.MouseButton1Click:Connect(toggleWallCheck)
 WallAttackBtn.MouseButton1Click:Connect(toggleWallAttack)
+]]--
 
 -- Silent Aim
 local silentAimEnabled = false
@@ -439,6 +445,7 @@ print('combat 로드 17')
 -- FastShot
 local fastShotApplied = false
 
+--[[ 추가 UI 버튼 테스트를 위해 주석 처리
 -- 버튼 생성
 local SilentAimBtn, _, SilentAimSwitch, SilentAimSwitchBtn = createSwitchButton(CombatPage, "Silent Aim", 300)
 local FastShotBtn, _, FastShotSwitch, FastShotSwitchBtn = createSwitchButton(CombatPage, "Fast Shot", 350)
@@ -468,4 +475,5 @@ FastShotBtn.MouseButton1Click:Connect(function()
     end)
 end)
 print('combat 로드 19')
+]]--
 print("Combat 로드 완료!")
