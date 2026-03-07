@@ -165,6 +165,7 @@ local function FindClearPosition(targetPos)
     end
     return targetPos + Vector3.new(0,15,0)
 end
+--[[ 테스트를 위해 트리거봇 스레드 주석 처리
 -- Triggerbot 루프
 spawn(function()
     local isHolding = false
@@ -190,10 +191,12 @@ spawn(function()
         end
     end
 end)
+]]-- 트리거봇 스레드 주석 끝
 -- RenderStepped
 local NoclipSwitch, NoclipSwitchBtn, FlySwitch, FlySwitchBtn
 local TeleportSwitch, TeleportSwitchBtn, TeleportAimSwitch, TeleportAimSwitchBtn
 
+--[[ 테스트를 위해 RenderStepped 무한루프 주석 처리
 RunService.RenderStepped:Connect(function()
     if teleportEnabled and teleportTarget then
         local targetHead = teleportTarget:FindFirstChild("Head")
@@ -256,6 +259,7 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
+]] -- RenderStepped 주석 끝
 -- 버튼 생성
 local CombatPage = Pages.Combat
 local AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn = createSwitchButton(CombatPage, "Aimbot", 0)
