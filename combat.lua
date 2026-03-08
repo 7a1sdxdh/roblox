@@ -204,7 +204,21 @@ end
 
 -- Silent Aim 로직
 local rs = game:GetService("ReplicatedStorage")
-local util = require(rs.Modules.Utility)
+local util = nil
+local old_ray = nil
+local silentAimReady = false
+
+-- pcall로 감싸서 require 실패해도 크래시 안남
+local ok, result = pcall(function()
+    util = require(rs:WaitForChild("Modules", 5) and rs.Modules:WaitForChild("Utility", 5))
+end)
+if ok and util and util.Raycast then
+    old_ray = util.Raycast
+    silentAimReady = true
+    print("Silent Aim 준비 완료")
+else
+    warn("Silent Aim: Utility 모듈 로드 실패 - 비활성화됨")
+end
 
 local ents = {}
 local function scan()
@@ -252,17 +266,18 @@ local function closestSilent()
     return best
 end
 
-local old_ray = util.Raycast
-util.Raycast = function(s, o, d, len, f, ft, viz)
-    if silentAimEnabled and len == 999 then
-        f = {} ft = Enum.RaycastFilterType.Exclude
-        local tgt = closestSilent()
-        if tgt and tgt:FindFirstChild("Head") then
-            local hitpos = tgt.Head.Position
-            return {Position = hitpos, Distance = (hitpos - o).Magnitude, Instance = tgt.Head, Material = tgt.Head.Material, Normal = Vector3.yAxis}
+if silentAimReady then
+    util.Raycast = function(s, o, d, len, f, ft, viz)
+        if silentAimEnabled and len == 999 then
+            f = {} ft = Enum.RaycastFilterType.Exclude
+            local tgt = closestSilent()
+            if tgt and tgt:FindFirstChild("Head") then
+                local hitpos = tgt.Head.Position
+                return {Position = hitpos, Distance = (hitpos - o).Magnitude, Instance = tgt.Head, Material = tgt.Head.Material, Normal = Vector3.yAxis}
+            end
         end
+        return old_ray(s, o, d, len, f, ft, viz)
     end
-    return old_ray(s, o, d, len, f, ft, viz)
 end
 
 -- Triggerbot 루프 (Heartbeat, 부하 최소화)
