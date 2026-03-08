@@ -6,8 +6,9 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
+
 task.wait(0.1)
--- [수정된 부분] 테마와 스크롤프레임이 nil일 경우를 대비한 방어 코드
+
 local theme = _G.theme or {
     boxOff = Color3.fromRGB(40, 40, 40),
     boxOn = Color3.fromRGB(50, 120, 255),
@@ -373,17 +374,20 @@ fastShotBox.MouseButton1Click:Connect(function()
     fastShotBox.BackgroundColor3 = _G.fastShotEnabled and theme.boxOn or theme.boxOff
     
     if _G.fastShotEnabled then
-        for _, gcVal in pairs(getgc(true)) do
-            if type(gcVal) == "table" then
-                if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = 0 end
-                if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = 0 end
-                if rawget(gcVal, "ShootRecoil") then gcVal["ShootRecoil"] = 0 end
-                if rawget(gcVal, "AttackCooldown") then gcVal["AttackCooldown"] = 0.1 end
-                if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = 0.05 end
-                if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = 0.05 end
-                if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = 0 end
+        task.spawn(function()
+            for _, gcVal in pairs(getgc(true)) do
+                if type(gcVal) == "table" then
+                    if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = 0 end
+                    if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = 0 end
+                    if rawget(gcVal, "ShootRecoil") then gcVal["ShootRecoil"] = 0 end
+                    if rawget(gcVal, "AttackCooldown") then gcVal["AttackCooldown"] = 0.1 end
+                    if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = 0.05 end
+                    if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = 0.05 end
+                    if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = 0 end
+                end
             end
-        end
+            print("FastShot 적용 완료!")
+        end)
     end
 end)
 
