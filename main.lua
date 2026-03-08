@@ -40,20 +40,19 @@ _G.AimbotSettings = {
     Part = "Head",
     Prediction = 0.01
 }
-
-_G.TriggerbotSettings = {
-    Delay = 0.05,
-    TeamCheck = true
-}
+_G.TriggerbotSettings = { Delay = 0.05, TeamCheck = true }
 
 local STAT_UPDATE_INTERVAL = 0.5
 local lastStatUpdate = 0
 
--- 심플 테마 (체크박스 스타일)
 local theme = {
     bg = Color3.fromRGB(20, 20, 20),
+    tabBg = Color3.fromRGB(28, 28, 28),
+    tabActive = Color3.fromRGB(50, 120, 255),
+    tabInactive = Color3.fromRGB(35, 35, 35),
     text = Color3.fromRGB(220, 220, 220),
-    line = Color3.fromRGB(60, 60, 60),
+    textDim = Color3.fromRGB(140, 140, 140),
+    line = Color3.fromRGB(55, 55, 55),
     boxOff = Color3.fromRGB(40, 40, 40),
     boxOn = Color3.fromRGB(50, 120, 255),
     accent = Color3.fromRGB(50, 120, 255)
@@ -65,10 +64,9 @@ ScreenGui.Name = "RivalsPremium"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 
--- 메인 프레임
 local MainFrame = Instance.new("Frame")
-MainFrame.Size = UDim2.new(0, 500, 0, 450)
-MainFrame.Position = UDim2.new(0.5, -250, 0.5, -225)
+MainFrame.Size = UDim2.new(0, 480, 0, 480)
+MainFrame.Position = UDim2.new(0.5, -240, 0.5, -240)
 MainFrame.BackgroundColor3 = theme.bg
 MainFrame.BorderSizePixel = 1
 MainFrame.BorderColor3 = theme.line
@@ -77,57 +75,90 @@ MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 _G.MainFrame = MainFrame
 
--- 타이틀
+-- 타이틀바
+local TitleBar = Instance.new("Frame")
+TitleBar.Size = UDim2.new(1, 0, 0, 32)
+TitleBar.BackgroundColor3 = theme.tabBg
+TitleBar.BorderSizePixel = 0
+TitleBar.Parent = MainFrame
+
 local Title = Instance.new("TextLabel")
-Title.Size = UDim2.new(1, -20, 0, 30)
-Title.Position = UDim2.new(0, 10, 0, 5)
+Title.Size = UDim2.new(0, 80, 1, 0)
+Title.Position = UDim2.new(0, 10, 0, 0)
 Title.BackgroundTransparency = 1
 Title.Text = "RIVALS"
-Title.TextColor3 = theme.text
-Title.TextSize = 14
+Title.TextColor3 = theme.accent
+Title.TextSize = 13
 Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
-Title.Parent = MainFrame
+Title.Parent = TitleBar
 
--- 통계
 local Stats = Instance.new("TextLabel")
-Stats.Size = UDim2.new(1, -20, 0, 15)
-Stats.Position = UDim2.new(0, 10, 0, 30)
+Stats.Size = UDim2.new(0, 200, 1, 0)
+Stats.Position = UDim2.new(1, -210, 0, 0)
 Stats.BackgroundTransparency = 1
 Stats.Text = "FPS: 0  |  Ping: 0 ms"
-Stats.TextColor3 = Color3.fromRGB(150, 150, 150)
+Stats.TextColor3 = theme.textDim
 Stats.TextSize = 9
 Stats.Font = Enum.Font.Gotham
-Stats.TextXAlignment = Enum.TextXAlignment.Left
-Stats.Parent = MainFrame
+Stats.TextXAlignment = Enum.TextXAlignment.Right
+Stats.Parent = TitleBar
 _G.Stats = Stats
 
--- 구분선
-local Line = Instance.new("Frame")
-Line.Size = UDim2.new(1, -20, 0, 1)
-Line.Position = UDim2.new(0, 10, 0, 50)
-Line.BackgroundColor3 = theme.line
-Line.BorderSizePixel = 0
-Line.Parent = MainFrame
+local TitleLine = Instance.new("Frame")
+TitleLine.Size = UDim2.new(1, 0, 0, 1)
+TitleLine.Position = UDim2.new(0, 0, 0, 32)
+TitleLine.BackgroundColor3 = theme.line
+TitleLine.BorderSizePixel = 0
+TitleLine.Parent = MainFrame
 
--- 스크롤 프레임
-local ScrollFrame = Instance.new("ScrollingFrame")
-ScrollFrame.Size = UDim2.new(1, -20, 1, -60)
-ScrollFrame.Position = UDim2.new(0, 10, 0, 55)
-ScrollFrame.BackgroundTransparency = 1
-ScrollFrame.BorderSizePixel = 0
-ScrollFrame.ScrollBarThickness = 4
-ScrollFrame.ScrollBarImageColor3 = theme.line
-ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
-ScrollFrame.Parent = MainFrame
-_G.ScrollFrame = ScrollFrame
+-- 탭 버튼 영역
+local TabBar = Instance.new("Frame")
+TabBar.Size = UDim2.new(1, 0, 0, 28)
+TabBar.Position = UDim2.new(0, 0, 0, 33)
+TabBar.BackgroundColor3 = theme.tabBg
+TabBar.BorderSizePixel = 0
+TabBar.Parent = MainFrame
+
+local TabLine = Instance.new("Frame")
+TabLine.Size = UDim2.new(1, 0, 0, 1)
+TabLine.Position = UDim2.new(0, 0, 0, 61)
+TabLine.BackgroundColor3 = theme.line
+TabLine.BorderSizePixel = 0
+TabLine.Parent = MainFrame
 
 local Pages = {}
 _G.Pages = Pages
-Pages.Combat = ScrollFrame
 
-local menuButtons = {}
-_G.menuButtons = menuButtons
+local tabNames = {"Combat", "Movement", "Visual", "Ignore", "Settings"}
+local tabButtons = {}
+
+for i, name in ipairs(tabNames) do
+    local page = Instance.new("ScrollingFrame")
+    page.Size = UDim2.new(1, 0, 1, -63)
+    page.Position = UDim2.new(0, 0, 0, 63)
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 3
+    page.ScrollBarImageColor3 = theme.line
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.Visible = name == "Combat"
+    page.Parent = MainFrame
+    Pages[name] = page
+
+    local tabW = 480 / #tabNames
+    local btn = Instance.new("TextButton")
+    btn.Size = UDim2.new(0, tabW, 1, 0)
+    btn.Position = UDim2.new(0, (i-1) * tabW, 0, 0)
+    btn.BackgroundColor3 = name == "Combat" and theme.tabActive or theme.tabInactive
+    btn.BorderSizePixel = 0
+    btn.Text = name
+    btn.TextColor3 = name == "Combat" and Color3.fromRGB(255,255,255) or theme.textDim
+    btn.TextSize = 10
+    btn.Font = Enum.Font.GothamBold
+    btn.Parent = TabBar
+    tabButtons[name] = btn
+end
 
 local loadedModules = {}
 local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
@@ -144,10 +175,21 @@ local function loadModule(pageName)
     end
 end
 
--- Combat 자동 로드
+local function switchTab(name)
+    for _, n in ipairs(tabNames) do
+        Pages[n].Visible = n == name
+        tabButtons[n].BackgroundColor3 = n == name and theme.tabActive or theme.tabInactive
+        tabButtons[n].TextColor3 = n == name and Color3.fromRGB(255,255,255) or theme.textDim
+    end
+    loadModule(name)
+end
 
+for _, name in ipairs(tabNames) do
+    tabButtons[name].MouseButton1Click:Connect(function()
+        switchTab(name)
+    end)
+end
 
--- FPS/Ping 업데이트
 RunService.RenderStepped:Connect(function(deltaTime)
     local currentTime = tick()
     if currentTime - lastStatUpdate >= STAT_UPDATE_INTERVAL then
@@ -156,7 +198,6 @@ RunService.RenderStepped:Connect(function(deltaTime)
     end
 end)
 
--- H키 토글
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.H then
@@ -192,9 +233,6 @@ LocalPlayer.CharacterRemoving:Connect(function()
     if _G.infJumpConnection then _G.infJumpConnection:Disconnect() _G.infJumpConnection = nil end
     _G.infJumpEnabled = false
 end)
-task.spawn(function()
-    task.wait(0.5)
-    loadModule("Combat")
-end)
-print("rw")
-print("Main (Checkbox Style) 로드 완료!")
+
+loadModule("Combat")
+print("Main 로드 완료!")
