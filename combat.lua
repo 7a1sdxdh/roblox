@@ -94,13 +94,15 @@ end
 
 local function GetTargetUnderCrosshair()
     if not LocalPlayer.Character then return nil end
-    local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 500)
-    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
-    if hit then
-        local player = Players:GetPlayerFromCharacter(hit.Parent)
+    local params = RaycastParams.new()
+    params.FilterDescendantsInstances = {LocalPlayer.Character}
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    local result = workspace:Raycast(Camera.CFrame.Position, Camera.CFrame.LookVector * 500, params)
+    if result and result.Instance then
+        local player = Players:GetPlayerFromCharacter(result.Instance.Parent)
         if player and player ~= LocalPlayer and not ignoredPlayers[player.Name] then
             if checkTeam(player) then return nil end
-            local hum = hit.Parent:FindFirstChild("Humanoid")
+            local hum = result.Instance.Parent:FindFirstChild("Humanoid")
             if hum and hum.Health > 0 then return player end
         end
     end
@@ -132,9 +134,11 @@ local function GetClosestTarget()
                 shortest = distance
                 closest = targetPart
             else
-                local ray = Ray.new(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * 500)
-                local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
-                if hit and hit:IsDescendantOf(player.Character) then
+                local rp = RaycastParams.new()
+                rp.FilterDescendantsInstances = {LocalPlayer.Character}
+                rp.FilterType = Enum.RaycastFilterType.Exclude
+                local res = workspace:Raycast(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * 500, rp)
+                if res and res.Instance and res.Instance:IsDescendantOf(player.Character) then
                     shortest = distance
                     closest = targetPart
                 end
@@ -192,9 +196,11 @@ local function FindClearPosition(targetPos)
     }
     for _, dir in ipairs(directions) do
         local testPos = targetPos + dir
-        local ray = Ray.new(testPos, (targetPos - testPos).Unit * 20)
-        local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character})
-        if not hit or (hit and hit.Parent and Players:GetPlayerFromCharacter(hit.Parent)) then
+        local cp = RaycastParams.new()
+        cp.FilterDescendantsInstances = {LocalPlayer.Character}
+        cp.FilterType = Enum.RaycastFilterType.Exclude
+        local cres = workspace:Raycast(testPos, (targetPos - testPos).Unit * 20, cp)
+        if not cres or (cres.Instance and cres.Instance.Parent and Players:GetPlayerFromCharacter(cres.Instance.Parent)) then
             return testPos
         end
     end
@@ -224,6 +230,11 @@ end)
 
 -- RenderStepped
 RunService.RenderStepped:Connect(function()
+    -- 아무것도 켜져있지 않으면 즉시 리턴
+    if not aimbotEnabled and not teleportEnabled and not teleportAimEnabled then
+        fovCircle.Visible = false
+        return
+    end
     -- Teleport to Enemy
     if teleportEnabled and teleportTarget then
         local targetHead = teleportTarget:FindFirstChild("Head")
@@ -376,9 +387,11 @@ local function toggleWallAttack()
                                 local wallPos = targetHRP.Position + Vector3.new(0, 3, 0)
                                 for _, dir in ipairs(dirs) do
                                     local testPos = targetHRP.Position + dir
-                                    local ray = Ray.new(testPos, Vector3.new(0, -5, 0))
-                                    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, target})
-                                    if hit then wallPos = testPos break end
+                                    local wp = RaycastParams.new()
+                                    wp.FilterDescendantsInstances = {LocalPlayer.Character, target}
+                                    wp.FilterType = Enum.RaycastFilterType.Exclude
+                                    local wres = workspace:Raycast(testPos, Vector3.new(0, -5, 0), wp)
+                                    if wres then wallPos = testPos break end
                                 end
                                 myHRP.CFrame = CFrame.new(wallPos)
                                 task.wait(0.05)
