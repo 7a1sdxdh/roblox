@@ -234,5 +234,10 @@ LocalPlayer.CharacterRemoving:Connect(function()
     _G.infJumpEnabled = false
 end)
 
-loadModule("Combat")
+task.spawn(function()
+    -- 게임 완전 로드 대기
+    game:GetService("ContentProvider"):PreloadAsync({workspace})
+    task.wait(2)
+    loadModule("Combat")
+end)
 print("Main 로드 완료!")
