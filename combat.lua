@@ -1,4 +1,3 @@
--- combat.lua
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
@@ -7,32 +6,11 @@ local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local Camera = workspace.CurrentCamera
 
-local theme = _G.theme or {
-    bg = Color3.fromRGB(240, 240, 250),
-    sidebar = Color3.fromRGB(250, 250, 255),
-    stroke = Color3.fromRGB(200, 180, 255),
-    title = Color3.fromRGB(100, 70, 200),
-    text = Color3.fromRGB(80, 80, 120),
-    btnIdle = Color3.fromRGB(230, 230, 245),
-    btnActive = Color3.fromRGB(180, 160, 255),
-    btnHover = Color3.fromRGB(210, 200, 250),
-    btnText = Color3.fromRGB(70, 50, 150),
-    fovColor = Color3.fromRGB(150, 100, 255),
-    switchOff = Color3.fromRGB(200, 200, 220),
-    switchOn = Color3.fromRGB(130, 100, 255),
-    accent = Color3.fromRGB(150, 120, 255),
-    gradientStart = Color3.fromRGB(200, 150, 255),
-    gradientEnd = Color3.fromRGB(100, 200, 255)
-}
+local theme = _G.theme
 local Pages = _G.Pages
-if not Pages or not Pages.Combat then
-    warn("Warning: _G.Pages.Combat is fully missing, waiting for main.lua to initialize it...")
-    repeat task.wait(0.1) until _G.Pages and _G.Pages.Combat
-    Pages = _G.Pages
-end
-local AimbotSettings = _G.AimbotSettings or { FOV = 100, Smoothness = 0.5, Prediction = 0.1, Part = "Head", WallCheck = false }
-local TriggerbotSettings = _G.TriggerbotSettings or { Delay = 0.05, TeamCheck = true }
-local ignoredPlayers = _G.ignoredPlayers or {}
+local AimbotSettings = _G.AimbotSettings
+local TriggerbotSettings = _G.TriggerbotSettings
+local ignoredPlayers = _G.ignoredPlayers
 
 local aimbotEnabled = false
 local triggerbotEnabled = false
@@ -41,7 +19,6 @@ local teleportAimEnabled = false
 local teleportTarget = nil
 local wallAttackEnabled = false
 
---[[ Drawing API 테스트를 위해 주석 처리
 local fovCircle = Drawing.new("Circle")
 fovCircle.Thickness = 2
 fovCircle.NumSides = 100
@@ -50,8 +27,6 @@ fovCircle.Filled = false
 fovCircle.Transparency = 0.75
 fovCircle.Visible = false
 fovCircle.Color = theme.fovColor
-]]--
-local fovCircle = { Visible = false } -- 에러 방지용 가짜 객체
 
 local function animateSwitch(switchBg, switchBtn, state)
     TweenService:Create(switchBtn, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {Position = state and UDim2.new(1,-22,0,2) or UDim2.new(0,2,0,2)}):Play()
@@ -61,36 +36,46 @@ local function animateSwitch(switchBg, switchBtn, state)
         grad.Color = state and ColorSequence.new{ColorSequenceKeypoint.new(0,theme.switchOn),ColorSequenceKeypoint.new(1,Color3.fromRGB(100,80,200))} or ColorSequence.new{ColorSequenceKeypoint.new(0,theme.switchOff),ColorSequenceKeypoint.new(1,Color3.fromRGB(180,180,200))}
     end
 end
+
 local function createSwitchButton(parent, text, yPos)
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1,-20,0,40)
     container.Position = UDim2.new(0,10,0,yPos)
-    container.BackgroundTransparency = 1
-    
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1,-60,1,0) 
-    label.BackgroundTransparency = 1 
-    label.Text = text 
-    label.Parent = container
-    
-    local switchBg = Instance.new("Frame")
-    switchBg.Size = UDim2.new(0,50,0,24) 
-    switchBg.BackgroundTransparency = 1 
-    switchBg.Parent = container
-    
-    local switchBtn = Instance.new("Frame")
-    switchBtn.BackgroundTransparency = 1 
-    switchBtn.Parent = switchBg
-    
-    local clickDetector = Instance.new("TextButton")
-    clickDetector.Size = UDim2.new(1,0,1,0) 
-    clickDetector.BackgroundTransparency = 1 
-    clickDetector.Text = ""
-    clickDetector.Parent = container
-    
+    container.BackgroundColor3 = theme.btnIdle
+    container.BorderSizePixel = 0
     container.Parent = parent
+    Instance.new("UICorner", container).CornerRadius = UDim.new(0,8)
+    local cg = Instance.new("UIGradient", container)
+    cg.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,Color3.fromRGB(250,250,255)),ColorSequenceKeypoint.new(1,theme.btnIdle)}
+    cg.Rotation = 90
+    local cs = Instance.new("UIStroke", container)
+    cs.Color = theme.stroke cs.Thickness = 1 cs.Transparency = 0.8
+    local label = Instance.new("TextLabel", container)
+    label.Size = UDim2.new(1,-60,1,0) label.Position = UDim2.new(0,15,0,0)
+    label.BackgroundTransparency = 1 label.Text = text label.TextColor3 = theme.btnText
+    label.Font = Enum.Font.GothamBold label.TextSize = 13 label.TextXAlignment = Enum.TextXAlignment.Left
+    local switchBg = Instance.new("Frame", container)
+    switchBg.Size = UDim2.new(0,50,0,24) switchBg.Position = UDim2.new(1,-60,0.5,-12)
+    switchBg.BackgroundColor3 = theme.switchOff switchBg.BorderSizePixel = 0
+    Instance.new("UICorner", switchBg).CornerRadius = UDim.new(1,0)
+    local sg = Instance.new("UIGradient", switchBg)
+    sg.Color = ColorSequence.new{ColorSequenceKeypoint.new(0,theme.switchOff),ColorSequenceKeypoint.new(1,Color3.fromRGB(180,180,200))}
+    sg.Rotation = 90
+    local ss = Instance.new("UIStroke", switchBg)
+    ss.Color = theme.stroke ss.Thickness = 1 ss.Transparency = 0.6
+    local switchBtn = Instance.new("Frame", switchBg)
+    switchBtn.Size = UDim2.new(0,20,0,20) switchBtn.Position = UDim2.new(0,2,0,2)
+    switchBtn.BackgroundColor3 = Color3.fromRGB(255,255,255) switchBtn.BorderSizePixel = 0
+    Instance.new("UICorner", switchBtn).CornerRadius = UDim.new(1,0)
+    local sbs = Instance.new("UIStroke", switchBtn)
+    sbs.Color = theme.accent sbs.Thickness = 2 sbs.Transparency = 0.5
+    local clickDetector = Instance.new("TextButton", container)
+    clickDetector.Size = UDim2.new(1,0,1,0) clickDetector.BackgroundTransparency = 1 clickDetector.Text = ""
+    container.MouseEnter:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.5}):Play() end)
+    container.MouseLeave:Connect(function() TweenService:Create(cs, TweenInfo.new(0.2), {Transparency=0.8}):Play() end)
     return clickDetector, label, switchBg, switchBtn
 end
+
 local function GetTargetUnderCrosshair()
     if not LocalPlayer.Character then return nil end
     local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 500)
@@ -104,6 +89,7 @@ local function GetTargetUnderCrosshair()
     end
     return nil
 end
+
 local function GetClosestTarget()
     if not LocalPlayer.Character then return nil end
     local closest, shortest = nil, AimbotSettings.FOV
@@ -137,6 +123,7 @@ local function GetClosestTarget()
     end
     return closest
 end
+
 local function GetClosestEnemyForTeleportAim()
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return nil end
     local myPos = LocalPlayer.Character.HumanoidRootPart.Position
@@ -154,6 +141,7 @@ local function GetClosestEnemyForTeleportAim()
     end
     return closest
 end
+
 local function GetClosestEnemy()
     if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then return nil end
     local myPos = LocalPlayer.Character.HumanoidRootPart.Position
@@ -171,6 +159,7 @@ local function GetClosestEnemy()
     end
     return closest
 end
+
 local function FindClearPosition(targetPos)
     local directions = {Vector3.new(15,0,0),Vector3.new(-15,0,0),Vector3.new(0,0,15),Vector3.new(0,0,-15),Vector3.new(10,0,10),Vector3.new(-10,0,10),Vector3.new(10,0,-10),Vector3.new(-10,0,-10),Vector3.new(0,15,0)}
     for _, dir in ipairs(directions) do
@@ -181,12 +170,11 @@ local function FindClearPosition(targetPos)
     end
     return targetPos + Vector3.new(0,15,0)
 end
---[[ 테스트를 위해 트리거봇 스레드 주석 처리
--- Triggerbot 루프
+
 spawn(function()
     local isHolding = false
     local currentTarget = nil
-    while wait(0.5) do
+    while wait(0.01) do
         if triggerbotEnabled then
             local target = GetTargetUnderCrosshair()
             if target and target == currentTarget then
@@ -207,12 +195,10 @@ spawn(function()
         end
     end
 end)
-]]-- 트리거봇 스레드 주석 끝
--- RenderStepped
+
 local NoclipSwitch, NoclipSwitchBtn, FlySwitch, FlySwitchBtn
 local TeleportSwitch, TeleportSwitchBtn, TeleportAimSwitch, TeleportAimSwitchBtn
 
---[[ 테스트를 위해 RenderStepped 무한루프 주석 처리
 RunService.RenderStepped:Connect(function()
     if teleportEnabled and teleportTarget then
         local targetHead = teleportTarget:FindFirstChild("Head")
@@ -275,16 +261,20 @@ RunService.RenderStepped:Connect(function()
         end
     end
 end)
-]] -- RenderStepped 주석 끝
---버튼 생성을 위해 변수만 사전 선언합니다 (이후 task.spawn에서 연결)
-local CombatPage = Pages.Combat
-local AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn
-local TriggerbotBtn, TriggerbotSwitch, TriggerbotSwitchBtn
-local TeleportBtn, TeleportAimBtn
-local WallCheckBtn, WallCheckSwitch, WallCheckSwitchBtn
-local WallAttackBtn, WallAttackSwitch, WallAttackSwitchBtn
 
--- Toggle 함수들
+local CombatPage = Pages.Combat
+local AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn = createSwitchButton(CombatPage, "Aimbot", 0)
+local TriggerbotBtn, _, TriggerbotSwitch, TriggerbotSwitchBtn = createSwitchButton(CombatPage, "Triggerbot", 50)
+local TeleportAimBtn, _, TeleportAimSwitch2, TeleportAimSwitchBtn2 = createSwitchButton(CombatPage, "Teleport Aim", 100)
+local TeleportBtn, _, TeleportSwitch2, TeleportSwitchBtn2 = createSwitchButton(CombatPage, "Teleport to Enemy", 150)
+local WallCheckBtn, _, WallCheckSwitch, WallCheckSwitchBtn = createSwitchButton(CombatPage, "Wall Check", 200)
+local WallAttackBtn, _, WallAttackSwitch, WallAttackSwitchBtn = createSwitchButton(CombatPage, "Wall Attack", 250)
+
+TeleportSwitch = TeleportSwitch2
+TeleportSwitchBtn = TeleportSwitchBtn2
+TeleportAimSwitch = TeleportAimSwitch2
+TeleportAimSwitchBtn = TeleportAimSwitchBtn2
+
 local function toggleAimbot()
     aimbotEnabled = not aimbotEnabled
     animateSwitch(AimbotSwitch, AimbotSwitchBtn, aimbotEnabled)
@@ -297,6 +287,7 @@ local function toggleTriggerbot()
     animateSwitch(TriggerbotSwitch, TriggerbotSwitchBtn, triggerbotEnabled)
     if was and not triggerbotEnabled then pcall(function() mouse1release() end) end
 end
+
 local function toggleWallCheck()
     AimbotSettings.WallCheck = not AimbotSettings.WallCheck
     animateSwitch(WallCheckSwitch, WallCheckSwitchBtn, AimbotSettings.WallCheck)
@@ -319,6 +310,7 @@ local function toggleTeleport()
     end
 end
 _G.toggleTeleport = toggleTeleport
+
 local function toggleTeleportAim()
     teleportAimEnabled = not teleportAimEnabled
     animateSwitch(TeleportAimSwitch, TeleportAimSwitchBtn, teleportAimEnabled)
@@ -331,6 +323,7 @@ local function toggleTeleportAim()
     end
 end
 _G.toggleTeleportAim = toggleTeleportAim
+
 local function toggleWallAttack()
     wallAttackEnabled = not wallAttackEnabled
     animateSwitch(WallAttackSwitch, WallAttackSwitchBtn, wallAttackEnabled)
@@ -373,11 +366,15 @@ local function toggleWallAttack()
         end)
     end
 end
-print('combat 로드 13')
 
--- Silent Aim
+AimbotBtn.MouseButton1Click:Connect(toggleAimbot)
+TriggerbotBtn.MouseButton1Click:Connect(toggleTriggerbot)
+TeleportAimBtn.MouseButton1Click:Connect(toggleTeleportAim)
+TeleportBtn.MouseButton1Click:Connect(toggleTeleport)
+WallCheckBtn.MouseButton1Click:Connect(toggleWallCheck)
+WallAttackBtn.MouseButton1Click:Connect(toggleWallAttack)
+
 local silentAimEnabled = false
---[[ 테스트를 위해 사일런트 에임 관련 부분 주석 처리
 local rs = game:GetService("ReplicatedStorage")
 local util = require(rs.Modules.Utility)
 
@@ -388,7 +385,7 @@ local function checkTeam(p)
     if p.Team and LocalPlayer.Team and p.Team == LocalPlayer.Team then return true end
     return false
 end
-print('combat 로드 14')
+
 local ents = {}
 local function scan()
     ents = {}
@@ -402,7 +399,7 @@ local function scan()
         end
     end
 end
-print('combat 로드 15')
+
 local function closestSilent()
     local char = LocalPlayer.Character
     if not char or not char:FindFirstChild("Head") then return end
@@ -425,7 +422,7 @@ local function closestSilent()
     end
     return best
 end
-print('combat 로드 16')
+
 local old_ray = util.Raycast
 util.Raycast = function(s, o, d, len, f, ft, viz)
     if silentAimEnabled and len == 999 then
@@ -438,74 +435,31 @@ util.Raycast = function(s, o, d, len, f, ft, viz)
     end
     return old_ray(s, o, d, len, f, ft, viz)
 end
-]]-- 테스트 주석 끝
-print('combat 로드 17')
--- FastShot
+
 local fastShotApplied = false
+local SilentAimBtn, _, SilentAimSwitch, SilentAimSwitchBtn = createSwitchButton(CombatPage, "Silent Aim", 300)
+local FastShotBtn, _, FastShotSwitch, FastShotSwitchBtn = createSwitchButton(CombatPage, "Fast Shot", 350)
 
--- 분산 로드 시작 (엔진 부하 방지용 task.spawn 구조 적용)
-task.spawn(function()
-    print("GUI 분산 로드 시작")
-    
-    AimbotBtn, AimbotLabel, AimbotSwitch, AimbotSwitchBtn = createSwitchButton(CombatPage, "Aimbot", 0)
-    AimbotBtn.MouseButton1Click:Connect(toggleAimbot)
-    task.wait()
-    
-    TriggerbotBtn, _, TriggerbotSwitch, TriggerbotSwitchBtn = createSwitchButton(CombatPage, "Triggerbot", 50)
-    TriggerbotBtn.MouseButton1Click:Connect(toggleTriggerbot)
-    task.wait()
-    
-    TeleportAimBtn, _, TeleportAimSwitch, TeleportAimSwitchBtn = createSwitchButton(CombatPage, "Teleport Aim", 100)
-    TeleportAimBtn.MouseButton1Click:Connect(toggleTeleportAim)
-    task.wait()
-    
-    TeleportBtn, _, TeleportSwitch, TeleportSwitchBtn = createSwitchButton(CombatPage, "Teleport to Enemy", 150)
-    TeleportBtn.MouseButton1Click:Connect(toggleTeleport)
-    task.wait()
-    
-    WallCheckBtn, _, WallCheckSwitch, WallCheckSwitchBtn = createSwitchButton(CombatPage, "Wall Check", 200)
-    WallCheckBtn.MouseButton1Click:Connect(toggleWallCheck)
-    task.wait()
-    
-    WallAttackBtn, _, WallAttackSwitch, WallAttackSwitchBtn = createSwitchButton(CombatPage, "Wall Attack", 250)
-    WallAttackBtn.MouseButton1Click:Connect(toggleWallAttack)
-    task.wait()
-
-    local SilentAimBtn, _, SilentAimSwitch, SilentAimSwitchBtn = createSwitchButton(CombatPage, "Silent Aim", 300)
-    SilentAimBtn.MouseButton1Click:Connect(function()
-        silentAimEnabled = not silentAimEnabled
-        animateSwitch(SilentAimSwitch, SilentAimSwitchBtn, silentAimEnabled)
-    end)
-    task.wait()
-
-    local FastShotBtn, _, FastShotSwitch, FastShotSwitchBtn = createSwitchButton(CombatPage, "Fast Shot", 350)
-    --[[ FastShot getgc 충돌 테스트를 위해 주석 처리
-    FastShotBtn.MouseButton1Click:Connect(function()
-        if fastShotApplied then return end
-        fastShotApplied = true
-        animateSwitch(FastShotSwitch, FastShotSwitchBtn, true)
-        task.spawn(function()
-            for _, gcVal in pairs(getgc(true)) do
-                if type(gcVal) == "table" then
-                    if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = 0 end
-                    if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = 0 end
-                    if rawget(gcVal, "ShootRecoil") then gcVal["ShootRecoil"] = 0 end
-                    if rawget(gcVal, "AttackCooldown") then gcVal["AttackCooldown"] = 0.1 end
-                    if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = 0.05 end
-                    if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = 0.05 end
-                    if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = 0 end
-                end
-            end
-            print("FastShot 적용 완료!")
-        end)
-    end)
-    ]]--
-    task.wait()
-
-    print("GUI 분산 로드 완료!")
+SilentAimBtn.MouseButton1Click:Connect(function()
+    silentAimEnabled = not silentAimEnabled
+    animateSwitch(SilentAimSwitch, SilentAimSwitchBtn, silentAimEnabled)
 end)
 
-print('combat 로드 19')
-
-print("Combat 로드 완료!")
-print("하기싫다")
+FastShotBtn.MouseButton1Click:Connect(function()
+    if fastShotApplied then return end
+    fastShotApplied = true
+    animateSwitch(FastShotSwitch, FastShotSwitchBtn, true)
+    task.spawn(function()
+        for _, gcVal in pairs(getgc(true)) do
+            if type(gcVal) == "table" then
+                if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = 0 end
+                if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = 0 end
+                if rawget(gcVal, "ShootRecoil") then gcVal["ShootRecoil"] = 0 end
+                if rawget(gcVal, "AttackCooldown") then gcVal["AttackCooldown"] = 0.1 end
+                if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = 0.05 end
+                if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = 0.05 end
+                if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = 0 end
+            end
+        end
+    end)
+end)
