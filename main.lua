@@ -193,4 +193,5 @@ LocalPlayer.CharacterRemoving:Connect(function()
     _G.infJumpEnabled = false
 end)
 loadModule("Combat")
+print("w")
 print("Main (Checkbox Style) 로드 완료!")
