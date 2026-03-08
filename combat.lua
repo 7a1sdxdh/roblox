@@ -1,5 +1,5 @@
 -- Combat 모듈 (체크박스 스타일)
-
+print("d")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
