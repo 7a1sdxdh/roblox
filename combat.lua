@@ -6,7 +6,7 @@ local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
-
+task.wait(0.1)
 -- [수정된 부분] 테마와 스크롤프레임이 nil일 경우를 대비한 방어 코드
 local theme = _G.theme or {
     boxOff = Color3.fromRGB(40, 40, 40),
