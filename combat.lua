@@ -1,5 +1,5 @@
 -- Combat 모듈 (체크박스 스타일)
-print("d")
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -7,8 +7,20 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
-local theme = _G.theme
-local ScrollFrame = _G.ScrollFrame
+-- [수정된 부분] 테마와 스크롤프레임이 nil일 경우를 대비한 방어 코드
+local theme = _G.theme or {
+    boxOff = Color3.fromRGB(40, 40, 40),
+    boxOn = Color3.fromRGB(50, 120, 255),
+    line = Color3.fromRGB(60, 60, 60),
+    text = Color3.fromRGB(220, 220, 220)
+}
+local ScrollFrame = _G.ScrollFrame or (_G.Pages and _G.Pages.Combat)
+
+-- 만약 여전히 ScrollFrame이 nil이면 로드를 중단하여 에러 방지
+if not ScrollFrame then
+    warn("Combat 모듈 로드 실패: ScrollFrame을 찾지 못했습니다.")
+    return
+end
 
 -- 체크박스 생성 함수
 local yOffset = 10
