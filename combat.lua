@@ -21,7 +21,6 @@ local teleportEnabled = false
 local teleportAimEnabled = false
 local teleportTarget = nil
 local wallAttackEnabled = false
-local silentAimEnabled = false
 local fastShotApplied = false
 
 -- FOV 원
@@ -202,83 +201,7 @@ local function FindClearPosition(targetPos)
     return targetPos + Vector3.new(0, 15, 0)
 end
 
--- Silent Aim 로직
-local rs = game:GetService("ReplicatedStorage")
-local util = nil
-local old_ray = nil
-local silentAimReady = false
-
--- pcall로 감싸서 require 실패해도 크래시 안남
-local ok, result = pcall(function()
-    util = require(rs:WaitForChild("Modules", 5) and rs.Modules:WaitForChild("Utility", 5))
-end)
-if ok and util and util.Raycast then
-    old_ray = util.Raycast
-    silentAimReady = true
-    print("Silent Aim 준비 완료")
-else
-    warn("Silent Aim: Utility 모듈 로드 실패 - 비활성화됨")
-end
-
-local ents = {}
-local function scan()
-    ents = {}
-    for _, v in pairs(workspace:GetChildren()) do
-        if v:FindFirstChildOfClass("Humanoid") then
-            table.insert(ents, v)
-        elseif v.Name == "HurtEffect" then
-            for _, hv in pairs(v:GetChildren()) do
-                if hv.ClassName ~= "Highlight" then table.insert(ents, hv) end
-            end
-        end
-    end
-end
-
-local function closestSilent()
-    local char = LocalPlayer.Character
-    if not char or not char:FindFirstChild("Head") then return end
-    scan()
-    local best, dist = nil, 99999
-    local scr = Camera.ViewportSize / 2
-    local myHead = char.Head.Position
-    for _, v in pairs(ents) do
-        if v == LocalPlayer.Character then continue end
-        if not v:FindFirstChild("HumanoidRootPart") then continue end
-        if not v:FindFirstChild("Head") then continue end
-        local humanoid = v:FindFirstChildOfClass("Humanoid")
-        if not humanoid then continue end
-        if humanoid.Health <= 0 or humanoid:GetState() == Enum.HumanoidStateType.Dead then continue end
-        local player = Players:GetPlayerFromCharacter(v)
-        if player and checkTeam(player) then continue end
-        local pos, vis = Camera:WorldToViewportPoint(v.HumanoidRootPart.Position)
-        if not vis then continue end
-        local d = (Vector2.new(pos.X, pos.Y) - scr).Magnitude
-        local direction = (v.Head.Position - myHead).Unit
-        local distance = (v.Head.Position - myHead).Magnitude
-        local raycastParams = RaycastParams.new()
-        raycastParams.FilterDescendantsInstances = {char}
-        raycastParams.FilterType = Enum.RaycastFilterType.Exclude
-        raycastParams.IgnoreWater = true
-        local result = workspace:Raycast(myHead, direction * distance, raycastParams)
-        local isVisible = (result == nil) or (result.Instance and result.Instance:IsDescendantOf(v))
-        if isVisible and d < dist then best = v dist = d end
-    end
-    return best
-end
-
-if silentAimReady then
-    util.Raycast = function(s, o, d, len, f, ft, viz)
-        if silentAimEnabled and len == 999 then
-            f = {} ft = Enum.RaycastFilterType.Exclude
-            local tgt = closestSilent()
-            if tgt and tgt:FindFirstChild("Head") then
-                local hitpos = tgt.Head.Position
-                return {Position = hitpos, Distance = (hitpos - o).Magnitude, Instance = tgt.Head, Material = tgt.Head.Material, Normal = Vector3.yAxis}
-            end
-        end
-        return old_ray(s, o, d, len, f, ft, viz)
-    end
-end
+-- Silent Aim: 별도 모듈로 분리 예정 (준비중)
 
 -- Triggerbot 루프 (Heartbeat, 부하 최소화)
 local trigCooldown = false
@@ -369,7 +292,7 @@ end)
 createSection("AIMBOT")
 local aimbotBox = createCheckbox("Aimbot  [Q]")
 local triggerbotBox = createCheckbox("Triggerbot")
-local silentAimBox = createCheckbox("Silent Aim")
+local silentAimBox = createCheckbox("Silent Aim (준비중)")
 local wallCheckBox = createCheckbox("Wall Check")
 
 createSection("TELEPORT")
@@ -391,11 +314,6 @@ local function toggleTriggerbot()
     triggerbotEnabled = not triggerbotEnabled
     triggerbotBox.BackgroundColor3 = triggerbotEnabled and theme.boxOn or theme.boxOff
     if not triggerbotEnabled then pcall(function() mouse1release() end) end
-end
-
-local function toggleSilentAim()
-    silentAimEnabled = not silentAimEnabled
-    silentAimBox.BackgroundColor3 = silentAimEnabled and theme.boxOn or theme.boxOff
 end
 
 local function toggleWallCheck()
@@ -485,7 +403,6 @@ end
 -- ── 클릭 연결 ──
 aimbotBox.MouseButton1Click:Connect(toggleAimbot)
 triggerbotBox.MouseButton1Click:Connect(toggleTriggerbot)
-silentAimBox.MouseButton1Click:Connect(toggleSilentAim)
 wallCheckBox.MouseButton1Click:Connect(toggleWallCheck)
 teleportAimBox.MouseButton1Click:Connect(toggleTeleportAim)
 teleportBox.MouseButton1Click:Connect(toggleTeleport)
