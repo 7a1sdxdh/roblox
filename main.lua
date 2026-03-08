@@ -192,6 +192,9 @@ LocalPlayer.CharacterRemoving:Connect(function()
     if _G.infJumpConnection then _G.infJumpConnection:Disconnect() _G.infJumpConnection = nil end
     _G.infJumpEnabled = false
 end)
-loadModule("Combat")
-print("w")
+task.spawn(function()
+    task.wait(0.5)
+    loadModule("Combat")
+end)
+print("rw")
 print("Main (Checkbox Style) 로드 완료!")
