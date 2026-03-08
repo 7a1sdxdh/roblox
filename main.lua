@@ -145,7 +145,7 @@ local function loadModule(pageName)
 end
 
 -- Combat 자동 로드
-loadModule("Combat")
+
 
 -- FPS/Ping 업데이트
 RunService.RenderStepped:Connect(function(deltaTime)
@@ -192,5 +192,5 @@ LocalPlayer.CharacterRemoving:Connect(function()
     if _G.infJumpConnection then _G.infJumpConnection:Disconnect() _G.infJumpConnection = nil end
     _G.infJumpEnabled = false
 end)
-
+loadModule("Combat")
 print("Main (Checkbox Style) 로드 완료!")
