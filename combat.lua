@@ -265,29 +265,22 @@ util.Raycast = function(s, o, d, len, f, ft, viz)
     return old_ray(s, o, d, len, f, ft, viz)
 end
 
--- Triggerbot 루프
-task.spawn(function()
-    local isHolding = false
-    local currentTarget = nil
-    while task.wait(0.01) do
-        if triggerbotEnabled then
-            local target = GetTargetUnderCrosshair()
-            if target and target == currentTarget then
-                if not isHolding then mouse1press() isHolding = true end
-            else
-                if isHolding then mouse1release() isHolding = false end
-                currentTarget = target
-                if target then
-                    task.wait(TriggerbotSettings.Delay)
-                    if triggerbotEnabled and GetTargetUnderCrosshair() == target then
-                        mouse1press() isHolding = true
-                    end
-                end
+-- Triggerbot 루프 (Heartbeat, 부하 최소화)
+local trigCooldown = false
+RunService.Heartbeat:Connect(function()
+    if not triggerbotEnabled or trigCooldown then return end
+    local target = GetTargetUnderCrosshair()
+    if target then
+        trigCooldown = true
+        task.delay(TriggerbotSettings.Delay, function()
+            if triggerbotEnabled and GetTargetUnderCrosshair() then
+                mouse1press()
+                task.wait(0.05)
+                mouse1release()
             end
-        else
-            if isHolding then mouse1release() isHolding = false end
-            currentTarget = nil
-        end
+            task.wait(0.05)
+            trigCooldown = false
+        end)
     end
 end)
 
@@ -488,7 +481,9 @@ fastShotBox.MouseButton1Click:Connect(function()
     fastShotApplied = true
     fastShotBox.BackgroundColor3 = theme.boxOn
     task.spawn(function()
-        for _, gcVal in pairs(getgc(true)) do
+        local gc = getgc(true)
+        local count = 0
+        for _, gcVal in pairs(gc) do
             if type(gcVal) == "table" then
                 if rawget(gcVal, "ShootCooldown") then gcVal["ShootCooldown"] = 0 end
                 if rawget(gcVal, "ShootSpread") then gcVal["ShootSpread"] = 0 end
@@ -497,6 +492,10 @@ fastShotBox.MouseButton1Click:Connect(function()
                 if rawget(gcVal, "HeavyAttackCooldown") then gcVal["HeavyAttackCooldown"] = 0.05 end
                 if rawget(gcVal, "DashCooldown") then gcVal["DashCooldown"] = 0.05 end
                 if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = 0 end
+            end
+            count = count + 1
+            if count % 500 == 0 then
+                task.wait()
             end
         end
         print("FastShot 적용 완료!")
