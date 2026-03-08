@@ -7,14 +7,24 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local Mouse = LocalPlayer:GetMouse()
 
-task.wait(0.1)
+task.wait(0.5)
 
-local theme = _G.theme or {
-    boxOff = Color3.fromRGB(40, 40, 40),
-    boxOn = Color3.fromRGB(50, 120, 255),
-    line = Color3.fromRGB(60, 60, 60),
-    text = Color3.fromRGB(220, 220, 220)
-}
+local theme = _G.theme
+if not theme then
+    warn("theme nil! 재시도...")
+    task.wait(1)
+    theme = _G.theme
+end
+
+if not theme then
+    theme = {
+        boxOff = Color3.fromRGB(40, 40, 40),
+        boxOn = Color3.fromRGB(50, 120, 255),
+        line = Color3.fromRGB(60, 60, 60),
+        text = Color3.fromRGB(220, 220, 220)
+    }
+end
+
 local ScrollFrame = _G.ScrollFrame or (_G.Pages and _G.Pages.Combat)
 
 -- 만약 여전히 ScrollFrame이 nil이면 로드를 중단하여 에러 방지
