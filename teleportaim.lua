@@ -46,11 +46,9 @@ local function FindClearPosition(targetPos)
     }
     for _, dir in ipairs(directions) do
         local testPos = targetPos + dir
-        local cp = RaycastParams.new()
-        cp.FilterDescendantsInstances = {LocalPlayer.Character}
-        cp.FilterType = Enum.RaycastFilterType.Exclude
-        local cres = workspace:Raycast(testPos, (targetPos - testPos).Unit * 20, cp)
-        if not cres or (cres.Instance and cres.Instance.Parent and Players:GetPlayerFromCharacter(cres.Instance.Parent)) then
+        local ray = Ray.new(testPos, (targetPos - testPos).Unit * 20)
+        local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character})
+        if not hit or (hit and hit.Parent and Players:GetPlayerFromCharacter(hit.Parent)) then
             return testPos
         end
     end
