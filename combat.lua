@@ -314,6 +314,7 @@ local function toggleWallAttack()
     end
 end
 
+-- ── 클릭 연결 ──
 aimbotBox.MouseButton1Click:Connect(toggleAimbot)
 triggerbotBox.MouseButton1Click:Connect(toggleTriggerbot)
 wallCheckBox.MouseButton1Click:Connect(toggleWallCheck)
@@ -347,19 +348,9 @@ end)
 
 print("Combat 로드 완료!")
 
--- ══════════════════════════════════════════════
--- 아래 6개 변수를 하나씩 true로 바꿔서 테스트
--- 어떤 걸 true로 했을 때 멈추는지 알려주세요
--- ══════════════════════════════════════════════
-local LOOP1_ON = false  -- Triggerbot
-local LOOP2_ON = false  -- Aimbot 타겟 탐색
-local LOOP3_ON = false  -- Aimbot 마우스 이동
-local LOOP4_ON = false  -- FOV 원
-local LOOP5_ON = false  -- Teleport
-local LOOP6_ON = false  -- Teleport Aim
+-- ── 루프 전부 활성화 ──
 
-if LOOP1_ON then task.spawn(function()
-    print("[디버그] LOOP1 시작")
+task.spawn(function()
     local trigCooldown = false
     while true do
         task.wait(0.1)
@@ -375,19 +366,20 @@ if LOOP1_ON then task.spawn(function()
             trigCooldown = false
         end)
     end
-end) end
+end)
 
-if LOOP2_ON then task.spawn(function()
-    print("[디버그] LOOP2 시작")
+task.spawn(function()
     while true do
         task.wait(0.05)
-        if not aimbotEnabled or teleportEnabled or teleportAimEnabled then cachedTarget = nil continue end
+        if not aimbotEnabled or teleportEnabled or teleportAimEnabled then
+            cachedTarget = nil
+            continue
+        end
         cachedTarget = GetClosestTarget()
     end
-end) end
+end)
 
-if LOOP3_ON then task.spawn(function()
-    print("[디버그] LOOP3 시작")
+task.spawn(function()
     while true do
         task.wait(0.016)
         if not aimbotEnabled or teleportEnabled or teleportAimEnabled or not cachedTarget then continue end
@@ -401,10 +393,9 @@ if LOOP3_ON then task.spawn(function()
             mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
         end
     end
-end) end
+end)
 
-if LOOP4_ON then task.spawn(function()
-    print("[디버그] LOOP4 시작")
+task.spawn(function()
     while true do
         task.wait(0.016)
         if aimbotEnabled then
@@ -415,28 +406,28 @@ if LOOP4_ON then task.spawn(function()
             fovCircle.Visible = false
         end
     end
-end) end
+end)
 
-if LOOP5_ON then task.spawn(function()
-    print("[디버그] LOOP5 시작")
+task.spawn(function()
     while true do
         task.wait(0.05)
         if not teleportEnabled or not teleportTarget then continue end
         local targetHead = teleportTarget:FindFirstChild("Head")
         local targetHum  = teleportTarget:FindFirstChild("Humanoid")
         if not targetHead or not targetHum or targetHum.Health <= 0 then
-            teleportEnabled = false teleportTarget = nil
-            teleportBox.BackgroundColor3 = theme.boxOff continue
+            teleportEnabled = false
+            teleportTarget  = nil
+            teleportBox.BackgroundColor3 = theme.boxOff
+            continue
         end
         local myChar = LocalPlayer.Character
         if myChar and myChar:FindFirstChild("HumanoidRootPart") then
             myChar.HumanoidRootPart.CFrame = CFrame.new(targetHead.Position + Vector3.new(0, 13, 0))
         end
     end
-end) end
+end)
 
-if LOOP6_ON then task.spawn(function()
-    print("[디버그] LOOP6 시작")
+task.spawn(function()
     while true do
         task.wait(0.05)
         if not teleportAimEnabled or not LocalPlayer.Character then continue end
@@ -458,4 +449,4 @@ if LOOP6_ON then task.spawn(function()
             mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
         end
     end
-end) end
+end)
