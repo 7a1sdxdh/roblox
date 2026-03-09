@@ -208,7 +208,7 @@ local function FindClearPosition(targetPos)
     return targetPos + Vector3.new(0, 15, 0)
 end
 
--- ── 1단계: UI 먼저 전부 생성 (동기, 빠름) ──
+-- ── UI 생성 ──
 createSection("AIMBOT")
 local aimbotBox     = createCheckbox("Aimbot  [Q]")
 local triggerbotBox = createCheckbox("Triggerbot")
@@ -355,44 +355,65 @@ fastShotBox.MouseButton1Click:Connect(function()
     end)
 end)
 
--- ── 2단계: UI·연결이 전부 끝난 뒤 루프 시작 (비동기, 게임 안 멈춤) ──
+print("Combat 로드 완료!")
+
+-- ── 루프 시작 (print 이후, 완전히 별도 스레드로) ──
+
+-- Triggerbot
 task.spawn(function()
-    -- Triggerbot 루프
     local trigCooldown = false
-    RunService.Heartbeat:Connect(function()
-        if not triggerbotEnabled or trigCooldown then return end
+    while true do
+        task.wait(0.1)
+        if not triggerbotEnabled or trigCooldown then continue end
         local target = GetTargetUnderCrosshair()
-        if target then
-            trigCooldown = true
-            task.delay(TriggerbotSettings.Delay, function()
-                if triggerbotEnabled and GetTargetUnderCrosshair() then
-                    mouse1press()
-                    task.wait(0.05)
-                    mouse1release()
-                end
+        if not target then continue end
+        trigCooldown = true
+        task.delay(TriggerbotSettings.Delay, function()
+            if triggerbotEnabled and GetTargetUnderCrosshair() then
+                mouse1press()
                 task.wait(0.05)
-                trigCooldown = false
-            end)
-        end
-    end)
+                mouse1release()
+            end
+            task.wait(0.05)
+            trigCooldown = false
+        end)
+    end
 end)
 
+-- Aimbot 타겟 탐색 (느린 루프, 0.05초마다 캐시 갱신)
 task.spawn(function()
-    -- Aimbot + Teleport 루프
-    local AIM_INTERVAL  = 0.05
-    local TELE_INTERVAL = 0.05
-    local lastAimTime   = 0
-    local lastTeleTime  = 0
-
-    RunService.RenderStepped:Connect(function()
-        if not aimbotEnabled and not teleportEnabled and not teleportAimEnabled then
-            fovCircle.Visible = false
-            return
+    while true do
+        task.wait(0.05)
+        if not aimbotEnabled or teleportEnabled or teleportAimEnabled then
+            cachedTarget = nil
+            continue
         end
+        cachedTarget = GetClosestTarget()
+    end
+end)
 
-        local now = tick()
+-- Aimbot 마우스 이동 (빠른 루프, 캐시 타겟 사용)
+task.spawn(function()
+    while true do
+        task.wait(0.016) -- ~60fps
+        if not aimbotEnabled or teleportEnabled or teleportAimEnabled then continue end
+        if not cachedTarget then continue end
+        local targetPos = cachedTarget.Position
+        if cachedTarget.Parent and cachedTarget.Parent:FindFirstChild("HumanoidRootPart") then
+            targetPos = targetPos + (cachedTarget.Parent.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
+        end
+        local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
+        if onScreen and screenPoint.Z > 0 then
+            local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
+            mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
+        end
+    end
+end)
 
-        -- FOV 원: 매 프레임 갱신
+-- FOV 원 갱신
+task.spawn(function()
+    while true do
+        task.wait(0.016) -- ~60fps
         if aimbotEnabled then
             fovCircle.Visible = true
             fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 58)
@@ -400,71 +421,50 @@ task.spawn(function()
         else
             fovCircle.Visible = false
         end
-
-        -- Teleport to Enemy
-        if teleportEnabled and teleportTarget then
-            if now - lastTeleTime >= TELE_INTERVAL then
-                lastTeleTime = now
-                local targetHead = teleportTarget:FindFirstChild("Head")
-                local targetHum  = teleportTarget:FindFirstChild("Humanoid")
-                if not targetHead or not targetHum or targetHum.Health <= 0 then
-                    teleportEnabled = false
-                    teleportTarget  = nil
-                    teleportBox.BackgroundColor3 = theme.boxOff
-                else
-                    local myChar = LocalPlayer.Character
-                    if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                        myChar.HumanoidRootPart.CFrame = CFrame.new(targetHead.Position + Vector3.new(0, 13, 0))
-                    end
-                end
-            end
-        end
-
-        -- Teleport Aim + Aimbot 타겟 탐색
-        if now - lastAimTime >= AIM_INTERVAL then
-            lastAimTime = now
-
-            if teleportAimEnabled and LocalPlayer.Character then
-                local targetChar = GetClosestEnemyForTeleportAim()
-                if targetChar then
-                    local targetHead = targetChar:FindFirstChild("Head")
-                    local targetHum  = targetChar:FindFirstChild("Humanoid")
-                    if targetHead and targetHum and targetHum.Health > 0 then
-                        local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if myHRP then
-                            myHRP.CFrame = CFrame.new(FindClearPosition(targetHead.Position))
-                            local targetPos = targetHead.Position
-                            if targetChar:FindFirstChild("HumanoidRootPart") then
-                                targetPos = targetPos + (targetChar.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
-                            end
-                            local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
-                            if onScreen and screenPoint.Z > 0 then
-                                local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
-                                mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
-                            end
-                        end
-                    end
-                end
-            end
-
-            if aimbotEnabled and not teleportEnabled and not teleportAimEnabled then
-                cachedTarget = GetClosestTarget()
-            end
-        end
-
-        -- Aimbot 마우스 이동: 캐시 타겟으로 매 프레임 부드럽게
-        if aimbotEnabled and not teleportEnabled and not teleportAimEnabled and cachedTarget then
-            local targetPos = cachedTarget.Position
-            if cachedTarget.Parent and cachedTarget.Parent:FindFirstChild("HumanoidRootPart") then
-                targetPos = targetPos + (cachedTarget.Parent.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
-            end
-            local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
-            if onScreen and screenPoint.Z > 0 then
-                local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
-                mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
-            end
-        end
-    end)
+    end
 end)
 
-print("Combat 로ㅕㅕㅓㅑㅕㅕㅓ89ㅕㅑ드 완료!")
+-- Teleport to Enemy
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+        if not teleportEnabled or not teleportTarget then continue end
+        local targetHead = teleportTarget:FindFirstChild("Head")
+        local targetHum  = teleportTarget:FindFirstChild("Humanoid")
+        if not targetHead or not targetHum or targetHum.Health <= 0 then
+            teleportEnabled = false
+            teleportTarget  = nil
+            teleportBox.BackgroundColor3 = theme.boxOff
+            continue
+        end
+        local myChar = LocalPlayer.Character
+        if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+            myChar.HumanoidRootPart.CFrame = CFrame.new(targetHead.Position + Vector3.new(0, 13, 0))
+        end
+    end
+end)
+
+-- Teleport Aim
+task.spawn(function()
+    while true do
+        task.wait(0.05)
+        if not teleportAimEnabled or not LocalPlayer.Character then continue end
+        local targetChar = GetClosestEnemyForTeleportAim()
+        if not targetChar then continue end
+        local targetHead = targetChar:FindFirstChild("Head")
+        local targetHum  = targetChar:FindFirstChild("Humanoid")
+        if not targetHead or not targetHum or targetHum.Health <= 0 then continue end
+        local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if not myHRP then continue end
+        myHRP.CFrame = CFrame.new(FindClearPosition(targetHead.Position))
+        local targetPos = targetHead.Position
+        if targetChar:FindFirstChild("HumanoidRootPart") then
+            targetPos = targetPos + (targetChar.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
+        end
+        local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
+        if onScreen and screenPoint.Z > 0 then
+            local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
+            mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
+        end
+    end
+end)
