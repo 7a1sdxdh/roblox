@@ -160,16 +160,20 @@ end
 local loadedModules = {}
 local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
 
+-- ── 핵심 수정: loadModule이 호출된 스레드를 블로킹하지 않도록
+-- HttpGet + loadstring을 항상 독립된 task.spawn 안에서 실행
 local function loadModule(pageName)
     if loadedModules[pageName] then return end
     loadedModules[pageName] = true
-    local url = BASE_URL .. pageName:lower() .. ".lua"
-    local ok, err = pcall(function()
-        loadstring(game:HttpGet(url))()
+    task.spawn(function()
+        local url = BASE_URL .. pageName:lower() .. ".lua"
+        local ok, err = pcall(function()
+            loadstring(game:HttpGet(url))()
+        end)
+        if not ok then
+            print("모듈 로드 실패:", pageName, err)
+        end
     end)
-    if not ok then
-        print("모듈 로드 실패:", pageName, err)
-    end
 end
 
 local function switchTab(name)
@@ -187,11 +191,9 @@ for _, name in ipairs(tabNames) do
     end)
 end
 
--- ── FPS / Ping 업데이트 (RenderStepped + throttle) ──
--- 이벤트는 매 프레임 수신하되, 실제 텍스트 갱신은 STAT_INTERVAL마다만 실행
+-- FPS / Ping 업데이트
 local STAT_INTERVAL = 0.5
-local lastStatTime  = 0
-
+local lastStatTime = 0
 RunService.RenderStepped:Connect(function(deltaTime)
     local now = tick()
     if now - lastStatTime < STAT_INTERVAL then return end
@@ -199,7 +201,7 @@ RunService.RenderStepped:Connect(function(deltaTime)
     Stats.Text = "FPS: " .. math.floor(1 / deltaTime) .. "  |  Ping: " .. math.floor(LocalPlayer:GetNetworkPing() * 1000 + 0.5) .. " ms"
 end)
 
--- ── 키 입력 처리 ──
+-- 키 입력 처리
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.H then
@@ -236,9 +238,11 @@ LocalPlayer.CharacterRemoving:Connect(function()
     _G.infJumpEnabled = false
 end)
 
+-- Combat 모듈 자동 로드 (게임 로드 후)
 task.spawn(function()
     game:GetService("ContentProvider"):PreloadAsync({workspace})
     task.wait(2)
     loadModule("Combat")
 end)
-print("Main 로드 완료jjiojjkjhuju89iuj98iujiuj!")
+
+print("Main 로드 완료!")
