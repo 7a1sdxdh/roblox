@@ -2,7 +2,7 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
+local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/main.lua"
 
 local modules = {
     "aimbot",
