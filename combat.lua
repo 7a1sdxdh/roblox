@@ -24,7 +24,6 @@ local wallAttackEnabled = false
 local fastShotApplied = false
 local cachedTarget = nil
 
--- FOV 원
 local fovCircle = Drawing.new("Circle")
 fovCircle.Thickness = 1
 fovCircle.NumSides = 100
@@ -34,7 +33,6 @@ fovCircle.Transparency = 0.6
 fovCircle.Visible = false
 fovCircle.Color = Color3.fromRGB(255, 255, 255)
 
--- ── 체크박스 UI ──
 local yOffset = 10
 local function createCheckbox(text)
     local container = Instance.new("Frame")
@@ -42,7 +40,6 @@ local function createCheckbox(text)
     container.Position = UDim2.new(0, 5, 0, yOffset)
     container.BackgroundTransparency = 1
     container.Parent = CombatPage
-
     local checkbox = Instance.new("TextButton")
     checkbox.Size = UDim2.new(0, 18, 0, 18)
     checkbox.Position = UDim2.new(1, -25, 0.5, -9)
@@ -51,7 +48,6 @@ local function createCheckbox(text)
     checkbox.BorderColor3 = theme.line
     checkbox.Text = ""
     checkbox.Parent = container
-
     local label = Instance.new("TextLabel")
     label.Size = UDim2.new(1, -35, 1, 0)
     label.Position = UDim2.new(0, 5, 0, 0)
@@ -62,7 +58,6 @@ local function createCheckbox(text)
     label.Font = Enum.Font.Gotham
     label.TextXAlignment = Enum.TextXAlignment.Left
     label.Parent = container
-
     yOffset = yOffset + 35
     CombatPage.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
     return checkbox
@@ -82,8 +77,6 @@ local function createSection(text)
     yOffset = yOffset + 22
     CombatPage.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
 end
-
--- ── 로직 함수 ──
 
 local function checkTeam(p)
     local myTeam = LocalPlayer:GetAttribute("TeamID")
@@ -208,18 +201,16 @@ local function FindClearPosition(targetPos)
     return targetPos + Vector3.new(0, 15, 0)
 end
 
--- ── UI 생성 ──
+-- ── UI ──
 createSection("AIMBOT")
 local aimbotBox     = createCheckbox("Aimbot  [Q]")
 local triggerbotBox = createCheckbox("Triggerbot")
 local silentAimBox  = createCheckbox("Silent Aim (준비중)")
 local wallCheckBox  = createCheckbox("Wall Check")
-
 createSection("TELEPORT")
 local teleportAimBox = createCheckbox("Teleport Aim  [Y]")
 local teleportBox    = createCheckbox("Teleport to Enemy  [T]")
 local wallAttackBox  = createCheckbox("Wall Attack")
-
 createSection("MISC")
 local fastShotBox = createCheckbox("Fast Shot (1회 적용)")
 
@@ -323,7 +314,6 @@ local function toggleWallAttack()
     end
 end
 
--- ── 클릭 연결 ──
 aimbotBox.MouseButton1Click:Connect(toggleAimbot)
 triggerbotBox.MouseButton1Click:Connect(toggleTriggerbot)
 wallCheckBox.MouseButton1Click:Connect(toggleWallCheck)
@@ -355,12 +345,21 @@ fastShotBox.MouseButton1Click:Connect(function()
     end)
 end)
 
-print("Combat v2 로드 완료!")
+print("Combat 로드 완료!")
 
--- ── 루프 시작 (print 이후, 완전히 별도 스레드로) ──
+-- ══════════════════════════════════════════════
+-- 아래 6개 변수를 하나씩 true로 바꿔서 테스트
+-- 어떤 걸 true로 했을 때 멈추는지 알려주세요
+-- ══════════════════════════════════════════════
+local LOOP1_ON = false  -- Triggerbot
+local LOOP2_ON = false  -- Aimbot 타겟 탐색
+local LOOP3_ON = false  -- Aimbot 마우스 이동
+local LOOP4_ON = false  -- FOV 원
+local LOOP5_ON = false  -- Teleport
+local LOOP6_ON = false  -- Teleport Aim
 
--- Triggerbot
-task.spawn(function()
+if LOOP1_ON then task.spawn(function()
+    print("[디버그] LOOP1 시작")
     local trigCooldown = false
     while true do
         task.wait(0.1)
@@ -370,34 +369,28 @@ task.spawn(function()
         trigCooldown = true
         task.delay(TriggerbotSettings.Delay, function()
             if triggerbotEnabled and GetTargetUnderCrosshair() then
-                mouse1press()
-                task.wait(0.05)
-                mouse1release()
+                mouse1press() task.wait(0.05) mouse1release()
             end
             task.wait(0.05)
             trigCooldown = false
         end)
     end
-end)
+end) end
 
--- Aimbot 타겟 탐색 (느린 루프, 0.05초마다 캐시 갱신)
-task.spawn(function()
+if LOOP2_ON then task.spawn(function()
+    print("[디버그] LOOP2 시작")
     while true do
         task.wait(0.05)
-        if not aimbotEnabled or teleportEnabled or teleportAimEnabled then
-            cachedTarget = nil
-            continue
-        end
+        if not aimbotEnabled or teleportEnabled or teleportAimEnabled then cachedTarget = nil continue end
         cachedTarget = GetClosestTarget()
     end
-end)
+end) end
 
--- Aimbot 마우스 이동 (빠른 루프, 캐시 타겟 사용)
-task.spawn(function()
+if LOOP3_ON then task.spawn(function()
+    print("[디버그] LOOP3 시작")
     while true do
-        task.wait(0.016) -- ~60fps
-        if not aimbotEnabled or teleportEnabled or teleportAimEnabled then continue end
-        if not cachedTarget then continue end
+        task.wait(0.016)
+        if not aimbotEnabled or teleportEnabled or teleportAimEnabled or not cachedTarget then continue end
         local targetPos = cachedTarget.Position
         if cachedTarget.Parent and cachedTarget.Parent:FindFirstChild("HumanoidRootPart") then
             targetPos = targetPos + (cachedTarget.Parent.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
@@ -408,12 +401,12 @@ task.spawn(function()
             mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
         end
     end
-end)
+end) end
 
--- FOV 원 갱신
-task.spawn(function()
+if LOOP4_ON then task.spawn(function()
+    print("[디버그] LOOP4 시작")
     while true do
-        task.wait(0.016) -- ~60fps
+        task.wait(0.016)
         if aimbotEnabled then
             fovCircle.Visible = true
             fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 58)
@@ -422,30 +415,28 @@ task.spawn(function()
             fovCircle.Visible = false
         end
     end
-end)
+end) end
 
--- Teleport to Enemy
-task.spawn(function()
+if LOOP5_ON then task.spawn(function()
+    print("[디버그] LOOP5 시작")
     while true do
         task.wait(0.05)
         if not teleportEnabled or not teleportTarget then continue end
         local targetHead = teleportTarget:FindFirstChild("Head")
         local targetHum  = teleportTarget:FindFirstChild("Humanoid")
         if not targetHead or not targetHum or targetHum.Health <= 0 then
-            teleportEnabled = false
-            teleportTarget  = nil
-            teleportBox.BackgroundColor3 = theme.boxOff
-            continue
+            teleportEnabled = false teleportTarget = nil
+            teleportBox.BackgroundColor3 = theme.boxOff continue
         end
         local myChar = LocalPlayer.Character
         if myChar and myChar:FindFirstChild("HumanoidRootPart") then
             myChar.HumanoidRootPart.CFrame = CFrame.new(targetHead.Position + Vector3.new(0, 13, 0))
         end
     end
-end)
+end) end
 
--- Teleport Aim
-task.spawn(function()
+if LOOP6_ON then task.spawn(function()
+    print("[디버그] LOOP6 시작")
     while true do
         task.wait(0.05)
         if not teleportAimEnabled or not LocalPlayer.Character then continue end
@@ -467,4 +458,4 @@ task.spawn(function()
             mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
         end
     end
-end)
+end) end
