@@ -82,7 +82,7 @@ local function createSection(text)
     CombatPage.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
 end
 
--- ── 로직 함수 (이전 파일 그대로) ──
+-- ── 로직 함수 ──
 
 local function checkTeam(p)
     local myTeam = LocalPlayer:GetAttribute("TeamID")
@@ -209,61 +209,90 @@ end
 
 -- Silent Aim: 별도 모듈로 분리 예정 (준비중)
 
--- Triggerbot 루프 (Heartbeat, 부하 최소화)
-local trigCooldown = false
-RunService.Heartbeat:Connect(function()
-    if not triggerbotEnabled or trigCooldown then return end
-    local target = GetTargetUnderCrosshair()
-    if target then
-        trigCooldown = true
-        task.delay(TriggerbotSettings.Delay, function()
-            if triggerbotEnabled and GetTargetUnderCrosshair() then
-                mouse1press()
-                task.wait(0.05)
-                mouse1release()
+-- ── Triggerbot 루프 (task.spawn + while true) ──
+task.spawn(function()
+    local trigCooldown = false
+    while true do
+        if triggerbotEnabled and not trigCooldown then
+            local target = GetTargetUnderCrosshair()
+            if target then
+                trigCooldown = true
+                task.delay(TriggerbotSettings.Delay, function()
+                    if triggerbotEnabled and GetTargetUnderCrosshair() then
+                        mouse1press()
+                        task.wait(0.05)
+                        mouse1release()
+                    end
+                    task.wait(0.05)
+                    trigCooldown = false
+                end)
             end
-            task.wait(0.05)
-            trigCooldown = false
-        end)
+        end
+        task.wait(0.1)
     end
 end)
 
--- RenderStepped
-RunService.RenderStepped:Connect(function()
-    -- 아무것도 켜져있지 않으면 즉시 리턴
-    if not aimbotEnabled and not teleportEnabled and not teleportAimEnabled then
-        fovCircle.Visible = false
-        return
-    end
-    -- Teleport to Enemy
-    if teleportEnabled and teleportTarget then
-        local targetHead = teleportTarget:FindFirstChild("Head")
-        local targetHum = teleportTarget:FindFirstChild("Humanoid")
-        if not targetHead or not targetHum or targetHum.Health <= 0 then
-            teleportEnabled = false
-            teleportTarget = nil
-            if teleportBox then teleportBox.BackgroundColor3 = theme.boxOff end
-        else
-            local myChar = LocalPlayer.Character
-            if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                myChar.HumanoidRootPart.CFrame = CFrame.new(targetHead.Position + Vector3.new(0, 13, 0))
+-- ── Aimbot + Teleport 루프 (task.spawn + while true) ──
+task.spawn(function()
+    while true do
+        -- 아무것도 켜져있지 않으면 대기
+        if not aimbotEnabled and not teleportEnabled and not teleportAimEnabled then
+            fovCircle.Visible = false
+            task.wait(0.1)
+            continue
+        end
+
+        -- Teleport to Enemy
+        if teleportEnabled and teleportTarget then
+            local targetHead = teleportTarget:FindFirstChild("Head")
+            local targetHum = teleportTarget:FindFirstChild("Humanoid")
+            if not targetHead or not targetHum or targetHum.Health <= 0 then
+                teleportEnabled = false
+                teleportTarget = nil
+                if teleportBox then teleportBox.BackgroundColor3 = theme.boxOff end
+            else
+                local myChar = LocalPlayer.Character
+                if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                    myChar.HumanoidRootPart.CFrame = CFrame.new(targetHead.Position + Vector3.new(0, 13, 0))
+                end
             end
         end
-    end
 
-    -- Teleport Aim
-    if teleportAimEnabled and LocalPlayer.Character then
-        local targetChar = GetClosestEnemyForTeleportAim()
-        if targetChar then
-            local targetHead = targetChar:FindFirstChild("Head")
-            local targetHum = targetChar:FindFirstChild("Humanoid")
-            if targetHead and targetHum and targetHum.Health > 0 then
-                local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                if myHRP then
-                    myHRP.CFrame = CFrame.new(FindClearPosition(targetHead.Position))
-                    local targetPos = targetHead.Position
-                    if targetChar:FindFirstChild("HumanoidRootPart") then
-                        targetPos = targetPos + (targetChar.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
+        -- Teleport Aim
+        if teleportAimEnabled and LocalPlayer.Character then
+            local targetChar = GetClosestEnemyForTeleportAim()
+            if targetChar then
+                local targetHead = targetChar:FindFirstChild("Head")
+                local targetHum = targetChar:FindFirstChild("Humanoid")
+                if targetHead and targetHum and targetHum.Health > 0 then
+                    local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if myHRP then
+                        myHRP.CFrame = CFrame.new(FindClearPosition(targetHead.Position))
+                        local targetPos = targetHead.Position
+                        if targetChar:FindFirstChild("HumanoidRootPart") then
+                            targetPos = targetPos + (targetChar.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
+                        end
+                        local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
+                        if onScreen and screenPoint.Z > 0 then
+                            local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
+                            mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
+                        end
+                    end
+                end
+            end
+        end
+
+        -- Aimbot + FOV 원
+        if aimbotEnabled then
+            fovCircle.Visible = true
+            fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 58)
+            fovCircle.Radius = AimbotSettings.FOV
+            if not teleportEnabled and not teleportAimEnabled then
+                local target = GetClosestTarget()
+                if target then
+                    local targetPos = target.Position
+                    if target.Parent:FindFirstChild("HumanoidRootPart") then
+                        targetPos = targetPos + (target.Parent.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
                     end
                     local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
                     if onScreen and screenPoint.Z > 0 then
@@ -272,30 +301,11 @@ RunService.RenderStepped:Connect(function()
                     end
                 end
             end
+        else
+            fovCircle.Visible = false
         end
-    end
 
-    -- Aimbot + FOV 원
-    if aimbotEnabled then
-        fovCircle.Visible = true
-        fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 58)
-        fovCircle.Radius = AimbotSettings.FOV
-        if not teleportEnabled and not teleportAimEnabled then
-            local target = GetClosestTarget()
-            if target then
-                local targetPos = target.Position
-                if target.Parent:FindFirstChild("HumanoidRootPart") then
-                    targetPos = targetPos + (target.Parent.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
-                end
-                local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
-                if onScreen and screenPoint.Z > 0 then
-                    local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
-                    mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
-                end
-            end
-        end
-    else
-        fovCircle.Visible = false
+        task.wait(0.1)
     end
 end)
 
