@@ -302,10 +302,10 @@ task.spawn(function()
         local ok, err = pcall(function()
     local code = game:HttpGet(BASE_URL .. fileName .. ".lua")
     print(fileName, "코드 길이:", #code)
-    local fn = loadstring(code)
+    print(fileName, "URL:", BASE_URL .. fileName .. ".lua")
+    local fn, loadErr = loadstring(code)
     if fn == nil then
-        print(fileName, "loadstring nil!")
-        return
+        error("loadstring 실패: " .. tostring(loadErr))  -- error()로 바꿔야 pcall이 잡음
     end
     fn()
 end)
