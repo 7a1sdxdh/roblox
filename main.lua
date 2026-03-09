@@ -182,7 +182,7 @@ for _, name in ipairs(tabNames) do
     end)
 end
 
--- FPS / Ping 업데이트
+--[[ FPS / Ping 업데이트
 local STAT_INTERVAL = 0.5
 local lastStatTime = 0
 RunService.RenderStepped:Connect(function(deltaTime)
@@ -190,7 +190,7 @@ RunService.RenderStepped:Connect(function(deltaTime)
     if now - lastStatTime < STAT_INTERVAL then return end
     lastStatTime = now
     Stats.Text = "FPS: " .. math.floor(1 / deltaTime) .. "  |  Ping: " .. math.floor(LocalPlayer:GetNetworkPing() * 1000 + 0.5) .. " ms"
-end)
+end) ]]--
 
 -- 키 입력
 UserInputService.InputBegan:Connect(function(input, gpe)
