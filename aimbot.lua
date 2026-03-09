@@ -84,6 +84,7 @@ end)
 -- 마우스 이동 + FOV 원
 task.spawn(function()
     while true do
+        task.wait(0.05)  -- 이거 추가
         if not aimbotEnabled then
             fovCircle.Visible = false
             continue
