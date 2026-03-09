@@ -3,7 +3,6 @@ local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 local ignoredPlayers = _G.ignoredPlayers
-local theme = _G.theme
 
 local teleportEnabled = false
 local teleportTarget = nil
