@@ -300,8 +300,15 @@ task.spawn(function()
         loadingBar.Size = UDim2.new((i-1)/total, 0, 1, 0)
 
         local ok, err = pcall(function()
-            loadstring(game:HttpGet(BASE_URL .. fileName .. ".lua"))()
-        end)
+    local code = game:HttpGet(BASE_URL .. fileName .. ".lua")
+    print(fileName, "코드 길이:", #code)
+    local fn = loadstring(code)
+    if fn == nil then
+        print(fileName, "loadstring nil!")
+        return
+    end
+    fn()
+end)
 
         if ok then
             table.insert(logLines, "\u2713 " .. fileName)
