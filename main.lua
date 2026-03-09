@@ -165,30 +165,15 @@ end
 -- Pages 전부 채운 뒤에 _G.Pages 할당
 _G.Pages = Pages
 
-local loadedModules = {}
 local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
 
-local function loadModule(pageName)
-    if loadedModules[pageName] then return end
-    loadedModules[pageName] = true
-    task.spawn(function()
-        local url = BASE_URL .. pageName:lower() .. ".lua"
-        local ok, err = pcall(function()
-            loadstring(game:HttpGet(url))()
-        end)
-        if not ok then
-            print("모듈 로드 실패:", pageName, err)
-        end
-    end)
-end
-
+-- 탭 전환만 담당 (로드 없음)
 local function switchTab(name)
     for _, n in ipairs(tabNames) do
         Pages[n].Visible = n == name
         tabButtons[n].BackgroundColor3 = n == name and theme.tabActive or theme.tabInactive
         tabButtons[n].TextColor3 = n == name and Color3.fromRGB(255,255,255) or theme.textDim
     end
-    loadModule(name)
 end
 
 for _, name in ipairs(tabNames) do
@@ -244,9 +229,102 @@ LocalPlayer.CharacterRemoving:Connect(function()
     _G.infJumpEnabled = false
 end)
 
--- _G.Pages 다 채운 뒤에 Combat 로드
-task.delay(0.5, function()
-    loadModule("Combat")
+-- MainFrame 숨기고 순차 로드 시작
+MainFrame.Visible = false
+
+local combatModules = {
+    "aimbot", "triggerbot", "silentaim", "wallcheck",
+    "teleportaim", "teleport", "wallattack", "fastshot",
+}
+
+local loadingFrame = Instance.new("Frame")
+loadingFrame.Size = UDim2.new(0, 300, 0, 160)
+loadingFrame.Position = UDim2.new(0.5, -150, 0.5, -80)
+loadingFrame.BackgroundColor3 = theme.bg
+loadingFrame.BorderSizePixel = 1
+loadingFrame.BorderColor3 = theme.line
+loadingFrame.Parent = ScreenGui
+
+local loadingTitle = Instance.new("TextLabel")
+loadingTitle.Size = UDim2.new(1, 0, 0, 30)
+loadingTitle.BackgroundTransparency = 1
+loadingTitle.Text = "RIVALS - 로딩중..."
+loadingTitle.TextColor3 = theme.accent
+loadingTitle.TextSize = 13
+loadingTitle.Font = Enum.Font.GothamBold
+loadingTitle.Parent = loadingFrame
+
+local loadingStatus = Instance.new("TextLabel")
+loadingStatus.Size = UDim2.new(1, -20, 0, 20)
+loadingStatus.Position = UDim2.new(0, 10, 0, 35)
+loadingStatus.BackgroundTransparency = 1
+loadingStatus.Text = "준비중..."
+loadingStatus.TextColor3 = theme.text
+loadingStatus.TextSize = 11
+loadingStatus.Font = Enum.Font.Gotham
+loadingStatus.TextXAlignment = Enum.TextXAlignment.Left
+loadingStatus.Parent = loadingFrame
+
+local loadingBarBg = Instance.new("Frame")
+loadingBarBg.Size = UDim2.new(1, -20, 0, 6)
+loadingBarBg.Position = UDim2.new(0, 10, 0, 62)
+loadingBarBg.BackgroundColor3 = theme.line
+loadingBarBg.BorderSizePixel = 0
+loadingBarBg.Parent = loadingFrame
+
+local loadingBar = Instance.new("Frame")
+loadingBar.Size = UDim2.new(0, 0, 1, 0)
+loadingBar.BackgroundColor3 = theme.accent
+loadingBar.BorderSizePixel = 0
+loadingBar.Parent = loadingBarBg
+
+local loadingLog = Instance.new("TextLabel")
+loadingLog.Size = UDim2.new(1, -20, 0, 60)
+loadingLog.Position = UDim2.new(0, 10, 0, 78)
+loadingLog.BackgroundTransparency = 1
+loadingLog.Text = ""
+loadingLog.TextColor3 = theme.textDim
+loadingLog.TextSize = 10
+loadingLog.Font = Enum.Font.Gotham
+loadingLog.TextXAlignment = Enum.TextXAlignment.Left
+loadingLog.TextYAlignment = Enum.TextYAlignment.Top
+loadingLog.TextWrapped = true
+loadingLog.Parent = loadingFrame
+
+task.spawn(function()
+    local total = #combatModules
+    local logLines = {}
+
+    for i, fileName in ipairs(combatModules) do
+        loadingStatus.Text = fileName .. " (" .. i .. "/" .. total .. ")"
+        loadingBar.Size = UDim2.new((i-1)/total, 0, 1, 0)
+
+        local ok, err = pcall(function()
+            loadstring(game:HttpGet(BASE_URL .. fileName .. ".lua"))()
+        end)
+
+        if ok then
+            table.insert(logLines, "\u2713 " .. fileName)
+        else
+            table.insert(logLines, "\u2717 " .. fileName)
+            print("로드 실패:", fileName, err)
+        end
+
+        local display = {}
+        for j = math.max(1, #logLines-3), #logLines do
+            table.insert(display, logLines[j])
+        end
+        loadingLog.Text = table.concat(display, "\n")
+
+        task.wait(1)
+    end
+
+    loadingBar.Size = UDim2.new(1, 0, 1, 0)
+    loadingStatus.Text = "완료!"
+    task.wait(0.5)
+    loadingFrame:Destroy()
+    MainFrame.Visible = true
+    print("모든 모듈 로드 완료!")
 end)
 
 print("Main 로드 완료!")
