@@ -6,7 +6,7 @@ local LocalPlayer = Players.LocalPlayer
 -- 공유 변수
 _G.guiEnabled = true
 _G.espBoxEnabled = false
-_G.espLineEnabled = false
+_G.espLineEnabled = false --v2
 _G.espNameEnabled = false
 _G.espHealthEnabled = false
 _G.espSkeletonEnabled = false
