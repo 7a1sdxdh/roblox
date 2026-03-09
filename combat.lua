@@ -2,104 +2,134 @@
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
-local theme = _G.theme
-local Pages = _G.Pages
-
-local CombatPage = Pages and Pages.Combat
-if not CombatPage then warn("Combat: Pages.Combat nil") return end
-
 local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
-local loadedFeatures = {}
 
-local yOffset = 10
+local modules = {
+    "aimbot",
+    "triggerbot",
+    "silentaim",
+    "wallcheck",
+    "teleportaim",
+    "teleport",
+    "wallattack",
+    "fastshot",
+}
 
-local function createSection(text)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -10, 0, 18)
-    label.Position = UDim2.new(0, 5, 0, yOffset)
-    label.BackgroundTransparency = 1
-    label.Text = "─ " .. text
-    label.TextColor3 = theme.accent
-    label.TextSize = 9
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.Parent = CombatPage
-    yOffset = yOffset + 22
-    CombatPage.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
-end
-
-local function createLoadButton(text, fileName)
-    local container = Instance.new("Frame")
-    container.Size = UDim2.new(1, -10, 0, 30)
-    container.Position = UDim2.new(0, 5, 0, yOffset)
-    container.BackgroundTransparency = 1
-    container.Parent = CombatPage
-
-    local statusLabel = Instance.new("TextLabel")
-    statusLabel.Size = UDim2.new(1, -90, 1, 0)
-    statusLabel.Position = UDim2.new(0, 5, 0, 0)
-    statusLabel.BackgroundTransparency = 1
-    statusLabel.Text = text .. "  [클릭해서 로드]"
-    statusLabel.TextColor3 = theme.textDim
-    statusLabel.TextSize = 11
-    statusLabel.Font = Enum.Font.Gotham
-    statusLabel.TextXAlignment = Enum.TextXAlignment.Left
-    statusLabel.Parent = container
-
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(0, 80, 0, 22)
-    btn.Position = UDim2.new(1, -85, 0.5, -11)
-    btn.BackgroundColor3 = theme.tabInactive
-    btn.BorderSizePixel = 0
-    btn.Text = "LOAD"
-    btn.TextColor3 = theme.text
-    btn.TextSize = 10
-    btn.Font = Enum.Font.GothamBold
-    btn.Parent = container
-
-    btn.MouseButton1Click:Connect(function()
-        if loadedFeatures[fileName] then
-            statusLabel.Text = text .. "  [이미 로드됨]"
+task.spawn(function()
+    -- _G.Pages.Combat이 생길 때까지 대기
+    local timeout = 10
+    local elapsed = 0
+    while not (_G.Pages and _G.Pages.Combat) do
+        task.wait(0.1)
+        elapsed = elapsed + 0.1
+        if elapsed >= timeout then
+            warn("Combat: Pages.Combat 대기 시간 초과")
             return
         end
-        btn.Text = "로딩중..."
-        btn.BackgroundColor3 = Color3.fromRGB(80, 80, 20)
-        statusLabel.Text = text .. "  [로딩중...]"
-        task.spawn(function()
-            local ok, err = pcall(function()
-                loadstring(game:HttpGet(BASE_URL .. fileName .. ".lua"))()
-            end)
-            if ok then
-                loadedFeatures[fileName] = true
-                btn.Text = "로드됨"
-                btn.BackgroundColor3 = theme.boxOn
-                statusLabel.Text = text .. "  [로드 완료]"
-                statusLabel.TextColor3 = theme.text
-            else
-                btn.Text = "실패"
-                btn.BackgroundColor3 = Color3.fromRGB(150, 30, 30)
-                statusLabel.Text = text .. "  [실패]"
-                print("로드 실패:", fileName, err)
-            end
+    end
+
+    local theme = _G.theme
+    local Pages = _G.Pages
+    local MainFrame = _G.MainFrame
+    local CombatPage = Pages.Combat
+
+    -- 로딩 중 GUI 숨김
+    if MainFrame then MainFrame.Visible = false end
+
+    -- 로딩 UI
+    local screenGui = LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("RivalsPremium")
+
+    local loadingFrame = Instance.new("Frame")
+    loadingFrame.Size = UDim2.new(0, 300, 0, 200)
+    loadingFrame.Position = UDim2.new(0.5, -150, 0.5, -100)
+    loadingFrame.BackgroundColor3 = theme.bg
+    loadingFrame.BorderSizePixel = 1
+    loadingFrame.BorderColor3 = theme.line
+    loadingFrame.Parent = screenGui
+
+    local loadingTitle = Instance.new("TextLabel")
+    loadingTitle.Size = UDim2.new(1, 0, 0, 30)
+    loadingTitle.BackgroundTransparency = 1
+    loadingTitle.Text = "RIVALS - 로딩중..."
+    loadingTitle.TextColor3 = theme.accent
+    loadingTitle.TextSize = 13
+    loadingTitle.Font = Enum.Font.GothamBold
+    loadingTitle.Parent = loadingFrame
+
+    local loadingStatus = Instance.new("TextLabel")
+    loadingStatus.Size = UDim2.new(1, -20, 0, 20)
+    loadingStatus.Position = UDim2.new(0, 10, 0, 40)
+    loadingStatus.BackgroundTransparency = 1
+    loadingStatus.Text = "준비중..."
+    loadingStatus.TextColor3 = theme.text
+    loadingStatus.TextSize = 11
+    loadingStatus.Font = Enum.Font.Gotham
+    loadingStatus.TextXAlignment = Enum.TextXAlignment.Left
+    loadingStatus.Parent = loadingFrame
+
+    local loadingBarBg = Instance.new("Frame")
+    loadingBarBg.Size = UDim2.new(1, -20, 0, 6)
+    loadingBarBg.Position = UDim2.new(0, 10, 0, 70)
+    loadingBarBg.BackgroundColor3 = theme.line
+    loadingBarBg.BorderSizePixel = 0
+    loadingBarBg.Parent = loadingFrame
+
+    local loadingBar = Instance.new("Frame")
+    loadingBar.Size = UDim2.new(0, 0, 0, 6)
+    loadingBar.BackgroundColor3 = theme.accent
+    loadingBar.BorderSizePixel = 0
+    loadingBar.Parent = loadingBarBg
+
+    local loadingLog = Instance.new("TextLabel")
+    loadingLog.Size = UDim2.new(1, -20, 0, 80)
+    loadingLog.Position = UDim2.new(0, 10, 0, 90)
+    loadingLog.BackgroundTransparency = 1
+    loadingLog.Text = ""
+    loadingLog.TextColor3 = theme.textDim
+    loadingLog.TextSize = 10
+    loadingLog.Font = Enum.Font.Gotham
+    loadingLog.TextXAlignment = Enum.TextXAlignment.Left
+    loadingLog.TextYAlignment = Enum.TextYAlignment.Top
+    loadingLog.TextWrapped = true
+    loadingLog.Parent = loadingFrame
+
+    -- 순차 로드
+    local total = #modules
+    local logLines = {}
+
+    for i, fileName in ipairs(modules) do
+        loadingStatus.Text = fileName .. ".lua 로딩중... (" .. i .. "/" .. total .. ")"
+        loadingBar.Size = UDim2.new((i - 1) / total, 0, 1, 0)
+
+        local ok, err = pcall(function()
+            loadstring(game:HttpGet(BASE_URL .. fileName .. ".lua"))()
         end)
-    end)
 
-    yOffset = yOffset + 35
-    CombatPage.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
-end
+        if ok then
+            table.insert(logLines, "✓ " .. fileName)
+        else
+            table.insert(logLines, "✗ " .. fileName .. " (실패)")
+            print("로드 실패:", fileName, err)
+        end
 
-createSection("AIMBOT")
-createLoadButton("Aimbot  [Q]",         "aimbot")
-createLoadButton("Triggerbot",          "triggerbot")
-createLoadButton("Silent Aim",          "silentaim")
-createLoadButton("Wall Check",          "wallcheck")
+        local display = {}
+        for j = math.max(1, #logLines - 4), #logLines do
+            table.insert(display, logLines[j])
+        end
+        loadingLog.Text = table.concat(display, "\n")
 
-createSection("TELEPORT")
-createLoadButton("Teleport Aim  [Y]",       "teleportaim")
-createLoadButton("Teleport to Enemy  [T]",  "teleport")
-createLoadButton("Wall Attack",             "wallattack")
+        task.wait(1)
+    end
 
-createSection("MISC")
-createLoadButton("Fast Shot", "fastshot")
+    -- 완료
+    loadingBar.Size = UDim2.new(1, 0, 1, 0)
+    loadingStatus.Text = "로드 완료!"
+    task.wait(0.5)
+
+    loadingFrame:Destroy()
+    if MainFrame then MainFrame.Visible = true end
+
+    print("Combat 모든 모듈 로드 완료!")
+end)
 
 print("Combat 로드 완료!")
