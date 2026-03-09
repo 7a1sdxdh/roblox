@@ -58,11 +58,9 @@ local function toggleWallAttack()
                                 local wallPos = targetHRP.Position + Vector3.new(0, 3, 0)
                                 for _, dir in ipairs(dirs) do
                                     local testPos = targetHRP.Position + dir
-                                    local wp = RaycastParams.new()
-                                    wp.FilterDescendantsInstances = {LocalPlayer.Character, target}
-                                    wp.FilterType = Enum.RaycastFilterType.Exclude
-                                    local wres = workspace:Raycast(testPos, Vector3.new(0, -5, 0), wp)
-                                    if wres then wallPos = testPos break end
+                                    local ray = Ray.new(testPos, Vector3.new(0, -5, 0))
+                                    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, target})
+                                    if hit then wallPos = testPos break end
                                 end
                                 myHRP.CFrame = CFrame.new(wallPos)
                                 task.wait(0.05)
