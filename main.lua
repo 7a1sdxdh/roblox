@@ -165,7 +165,7 @@ end
 -- Pages 전부 채운 뒤에 _G.Pages 할당
 _G.Pages = Pages
 
-local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/main.lua"
+local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
 
 -- 탭 전환만 담당 (로드 없음)
 local function switchTab(name)
