@@ -8,22 +8,18 @@ local Camera = workspace.CurrentCamera
 local AimbotSettings = _G.AimbotSettings
 local ignoredPlayers = _G.ignoredPlayers
 local theme = _G.theme
-local Pages = _G.Pages
-
-local CombatPage = Pages and Pages.Combat
-local aimbotBox = CombatPage and CombatPage:FindFirstChild("aimbotBox", true)
 
 local aimbotEnabled = false
 local cachedTarget = nil
 
 local fovCircle = Drawing.new("Circle")
-fovCircle.Thickness = 1
+fovCircle.Thickness = 2
 fovCircle.NumSides = 100
 fovCircle.Radius = AimbotSettings.FOV
 fovCircle.Filled = false
-fovCircle.Transparency = 0.6
+fovCircle.Transparency = 0.75
 fovCircle.Visible = false
-fovCircle.Color = Color3.fromRGB(255, 255, 255)
+fovCircle.Color = theme.fovColor or Color3.fromRGB(255, 255, 255)
 
 local function checkTeam(p)
     local myTeam = LocalPlayer:GetAttribute("TeamID")
@@ -58,11 +54,9 @@ local function GetClosestTarget()
                 shortest = distance
                 closest = targetPart
             else
-                local rp = RaycastParams.new()
-                rp.FilterDescendantsInstances = {LocalPlayer.Character}
-                rp.FilterType = Enum.RaycastFilterType.Exclude
-                local res = workspace:Raycast(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * 500, rp)
-                if res and res.Instance and res.Instance:IsDescendantOf(player.Character) then
+                local ray = Ray.new(Camera.CFrame.Position, (targetPart.Position - Camera.CFrame.Position).Unit * 500)
+                local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
+                if hit and hit:IsDescendantOf(player.Character) then
                     shortest = distance
                     closest = targetPart
                 end
@@ -77,9 +71,8 @@ local function toggleAimbot()
     if not aimbotEnabled then cachedTarget = nil end
 end
 _G.toggleAimbot = toggleAimbot
-_G.aimbotEnabled = function() return aimbotEnabled end
 
--- 타겟 탐색 루프
+-- 타겟 탐색
 task.spawn(function()
     while true do
         task.wait(0.05)
@@ -88,17 +81,18 @@ task.spawn(function()
     end
 end)
 
--- 마우스 이동 루프
+-- 마우스 이동 + FOV 원
 task.spawn(function()
     while true do
         task.wait(0.016)
-        if not aimbotEnabled or not cachedTarget then
+        if not aimbotEnabled then
             fovCircle.Visible = false
             continue
         end
         fovCircle.Visible = true
         fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 58)
         fovCircle.Radius = AimbotSettings.FOV
+        if not cachedTarget then continue end
         local targetPos = cachedTarget.Position
         if cachedTarget.Parent and cachedTarget.Parent:FindFirstChild("HumanoidRootPart") then
             targetPos = targetPos + (cachedTarget.Parent.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
