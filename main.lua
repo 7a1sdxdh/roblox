@@ -1,12 +1,11 @@
 local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
 -- 공유 변수
 _G.guiEnabled = true
 _G.espBoxEnabled = false
-_G.espLineEnabled = false --v2
+_G.espLineEnabled = false
 _G.espNameEnabled = false
 _G.espHealthEnabled = false
 _G.espSkeletonEnabled = false
@@ -96,18 +95,6 @@ Title.Font = Enum.Font.GothamBold
 Title.TextXAlignment = Enum.TextXAlignment.Left
 Title.Parent = TitleBar
 
-local Stats = Instance.new("TextLabel")
-Stats.Size = UDim2.new(0, 200, 1, 0)
-Stats.Position = UDim2.new(1, -210, 0, 0)
-Stats.BackgroundTransparency = 1
-Stats.Text = "FPS: 0  |  Ping: 0 ms"
-Stats.TextColor3 = theme.textDim
-Stats.TextSize = 9
-Stats.Font = Enum.Font.Gotham
-Stats.TextXAlignment = Enum.TextXAlignment.Right
-Stats.Parent = TitleBar
-_G.Stats = Stats
-
 local TitleLine = Instance.new("Frame")
 TitleLine.Size = UDim2.new(1, 0, 0, 1)
 TitleLine.Position = UDim2.new(0, 0, 0, 32)
@@ -130,7 +117,6 @@ TabLine.BackgroundColor3 = theme.line
 TabLine.BorderSizePixel = 0
 TabLine.Parent = MainFrame
 
--- Pages 먼저 전부 생성 후 _G.Pages에 할당
 local Pages = {}
 local tabNames = {"Combat", "Movement", "Visual", "Ignore", "Settings"}
 local tabButtons = {}
@@ -162,12 +148,10 @@ for i, name in ipairs(tabNames) do
     tabButtons[name] = btn
 end
 
--- Pages 전부 채운 뒤에 _G.Pages 할당
 _G.Pages = Pages
 
 local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
 
--- 탭 전환만 담당 (로드 없음)
 local function switchTab(name)
     for _, n in ipairs(tabNames) do
         Pages[n].Visible = n == name
@@ -181,16 +165,6 @@ for _, name in ipairs(tabNames) do
         switchTab(name)
     end)
 end
-
---[[ FPS / Ping 업데이트
-local STAT_INTERVAL = 0.5
-local lastStatTime = 0
-RunService.RenderStepped:Connect(function(deltaTime)
-    local now = tick()
-    if now - lastStatTime < STAT_INTERVAL then return end
-    lastStatTime = now
-    Stats.Text = "FPS: " .. math.floor(1 / deltaTime) .. "  |  Ping: " .. math.floor(LocalPlayer:GetNetworkPing() * 1000 + 0.5) .. " ms"
-end) ]]--
 
 -- 키 입력
 UserInputService.InputBegan:Connect(function(input, gpe)
@@ -229,7 +203,7 @@ LocalPlayer.CharacterRemoving:Connect(function()
     _G.infJumpEnabled = false
 end)
 
--- MainFrame 숨기고 순차 로드 시작
+-- 로딩
 MainFrame.Visible = false
 
 local combatModules = {
@@ -300,15 +274,14 @@ task.spawn(function()
         loadingBar.Size = UDim2.new((i-1)/total, 0, 1, 0)
 
         local ok, err = pcall(function()
-    local code = game:HttpGet(BASE_URL .. fileName .. ".lua")
-    print(fileName, "코드 길이:", #code)
-    print(fileName, "URL:", BASE_URL .. fileName .. ".lua")
-    local fn, loadErr = loadstring(code)
-    if fn == nil then
-        error("loadstring 실패: " .. tostring(loadErr))  -- error()로 바꿔야 pcall이 잡음
-    end
-    fn()
-end)
+            local url = BASE_URL .. fileName .. ".lua?nocache=" .. os.time()
+            local code = game:HttpGet(url)
+            local fn, loadErr = loadstring(code)
+            if fn == nil then
+                error("loadstring 실패: " .. tostring(loadErr))
+            end
+            fn()
+        end)
 
         if ok then
             table.insert(logLines, "[OK] " .. fileName)
