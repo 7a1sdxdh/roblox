@@ -4,9 +4,6 @@ local LocalPlayer = Players.LocalPlayer
 
 local theme = _G.theme
 local Pages = _G.Pages
-local AimbotSettings = _G.AimbotSettings
-local TriggerbotSettings = _G.TriggerbotSettings
-local ignoredPlayers = _G.ignoredPlayers
 
 local CombatPage = Pages and Pages.Combat
 if not CombatPage then warn("Combat: Pages.Combat nil") return end
@@ -14,7 +11,6 @@ if not CombatPage then warn("Combat: Pages.Combat nil") return end
 local BASE_URL = "https://raw.githubusercontent.com/7a1sdxdh/roblox/main/"
 local loadedFeatures = {}
 
--- ── UI 헬퍼 ──
 local yOffset = 10
 
 local function createSection(text)
@@ -32,7 +28,6 @@ local function createSection(text)
     CombatPage.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
 end
 
--- 로드 버튼: 클릭하면 해당 lua 파일을 GitHub에서 불러옴
 local function createLoadButton(text, fileName)
     local container = Instance.new("Frame")
     container.Size = UDim2.new(1, -10, 0, 30)
@@ -70,7 +65,6 @@ local function createLoadButton(text, fileName)
         btn.Text = "로딩중..."
         btn.BackgroundColor3 = Color3.fromRGB(80, 80, 20)
         statusLabel.Text = text .. "  [로딩중...]"
-
         task.spawn(function()
             local ok, err = pcall(function()
                 loadstring(game:HttpGet(BASE_URL .. fileName .. ".lua"))()
@@ -84,7 +78,7 @@ local function createLoadButton(text, fileName)
             else
                 btn.Text = "실패"
                 btn.BackgroundColor3 = Color3.fromRGB(150, 30, 30)
-                statusLabel.Text = text .. "  [실패: " .. tostring(err) .. "]"
+                statusLabel.Text = text .. "  [실패]"
                 print("로드 실패:", fileName, err)
             end
         end)
@@ -94,17 +88,16 @@ local function createLoadButton(text, fileName)
     CombatPage.CanvasSize = UDim2.new(0, 0, 0, yOffset + 10)
 end
 
--- ── 버튼 생성 ──
--- 각 버튼을 하나씩 눌러서 어디서 멈추는지 확인
 createSection("AIMBOT")
-createLoadButton("Aimbot  [Q]",    "aimbot")
-createLoadButton("Triggerbot",     "triggerbot")
-createLoadButton("Wall Check",     "wallcheck")
+createLoadButton("Aimbot  [Q]",         "aimbot")
+createLoadButton("Triggerbot",          "triggerbot")
+createLoadButton("Silent Aim",          "silentaim")
+createLoadButton("Wall Check",          "wallcheck")
 
 createSection("TELEPORT")
-createLoadButton("Teleport Aim  [Y]",      "teleportaim")
-createLoadButton("Teleport to Enemy  [T]", "teleport")
-createLoadButton("Wall Attack",            "wallattack")
+createLoadButton("Teleport Aim  [Y]",       "teleportaim")
+createLoadButton("Teleport to Enemy  [T]",  "teleport")
+createLoadButton("Wall Attack",             "wallattack")
 
 createSection("MISC")
 createLoadButton("Fast Shot", "fastshot")
