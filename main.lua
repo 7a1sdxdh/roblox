@@ -42,9 +42,6 @@ _G.AimbotSettings = {
 }
 _G.TriggerbotSettings = { Delay = 0.05, TeamCheck = true }
 
-local STAT_UPDATE_INTERVAL = 0.5
-local lastStatUpdate = 0
-
 local theme = {
     bg = Color3.fromRGB(20, 20, 20),
     tabBg = Color3.fromRGB(28, 28, 28),
@@ -190,14 +187,17 @@ for _, name in ipairs(tabNames) do
     end)
 end
 
-RunService.RenderStepped:Connect(function(deltaTime)
-    local currentTime = tick()
-    if currentTime - lastStatUpdate >= STAT_UPDATE_INTERVAL then
-        Stats.Text = "FPS: " .. math.floor(1/deltaTime) .. "  |  Ping: " .. math.floor(LocalPlayer:GetNetworkPing() * 1000 + 0.5) .. " ms"
-        lastStatUpdate = currentTime
+-- ── FPS / Ping 업데이트 루프 (task.spawn + while true) ──
+task.spawn(function()
+    while true do
+        local fps = math.floor(1 / RunService.RenderStepped:Wait())
+        local ping = math.floor(LocalPlayer:GetNetworkPing() * 1000 + 0.5)
+        Stats.Text = "FPS: " .. fps .. "  |  Ping: " .. ping .. " ms"
+        task.wait(0.5)
     end
 end)
 
+-- ── 키 입력 처리 ──
 UserInputService.InputBegan:Connect(function(input, gpe)
     if gpe then return end
     if input.KeyCode == Enum.KeyCode.H then
