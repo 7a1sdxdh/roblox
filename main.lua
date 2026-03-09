@@ -311,9 +311,9 @@ task.spawn(function()
 end)
 
         if ok then
-            table.insert(logLines, "\u2713 " .. fileName)
+            table.insert(logLines, "[OK] " .. fileName)
         else
-            table.insert(logLines, "\u2717 " .. fileName)
+            table.insert(logLines, "[FAIL] " .. fileName)
             print("로드 실패:", fileName, err)
         end
 
