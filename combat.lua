@@ -355,7 +355,7 @@ fastShotBox.MouseButton1Click:Connect(function()
     end)
 end)
 
-print("Combat 로드 완료!")
+print("Combat v2 로드 완료!")
 
 -- ── 루프 시작 (print 이후, 완전히 별도 스레드로) ──
 
