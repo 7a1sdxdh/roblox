@@ -1,4 +1,4 @@
--- combat.lua (체크박스 UI + 이전 로직 완전 이식)
+-- combat.lua
 local UserInputService = game:GetService("UserInputService")
 local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
@@ -22,6 +22,7 @@ local teleportAimEnabled = false
 local teleportTarget = nil
 local wallAttackEnabled = false
 local fastShotApplied = false
+local cachedTarget = nil
 
 -- FOV 원
 local fovCircle = Drawing.new("Circle")
@@ -207,127 +208,7 @@ local function FindClearPosition(targetPos)
     return targetPos + Vector3.new(0, 15, 0)
 end
 
--- Silent Aim: 별도 모듈로 분리 예정 (준비중)
-
--- ── Triggerbot (Heartbeat + throttle) ──
--- 이벤트는 매 프레임 수신하되, tick() 비교로 실제 처리 빈도만 줄임
-local TRIG_INTERVAL = 0.1
-local lastTrigTime = 0
-local trigCooldown = false
-
-RunService.Heartbeat:Connect(function()
-    if not triggerbotEnabled or trigCooldown then return end
-    local now = tick()
-    if now - lastTrigTime < TRIG_INTERVAL then return end
-    lastTrigTime = now
-
-    local target = GetTargetUnderCrosshair()
-    if target then
-        trigCooldown = true
-        task.delay(TriggerbotSettings.Delay, function()
-            if triggerbotEnabled and GetTargetUnderCrosshair() then
-                mouse1press()
-                task.wait(0.05)
-                mouse1release()
-            end
-            task.wait(0.05)
-            trigCooldown = false
-        end)
-    end
-end)
-
--- ── Aimbot + Teleport (RenderStepped + throttle) ──
--- FOV 원·마우스 이동은 매 프레임, 무거운 탐색(Raycast·루프)은 간격 제한
-local AIM_INTERVAL  = 0.05   -- 타겟 재탐색 주기
-local TELE_INTERVAL = 0.05   -- 텔레포트 위치 갱신 주기
-local lastAimTime   = 0
-local lastTeleTime  = 0
-local cachedTarget  = nil    -- 탐색 비용이 큰 GetClosestTarget 결과를 캐시
-
-RunService.RenderStepped:Connect(function()
-    if not aimbotEnabled and not teleportEnabled and not teleportAimEnabled then
-        fovCircle.Visible = false
-        return
-    end
-
-    local now = tick()
-
-    -- FOV 원 위치: 매 프레임 즉시 갱신 (연산 비용 거의 없음)
-    if aimbotEnabled then
-        fovCircle.Visible = true
-        fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 58)
-        fovCircle.Radius = AimbotSettings.FOV
-    else
-        fovCircle.Visible = false
-    end
-
-    -- Teleport to Enemy: TELE_INTERVAL마다만 CFrame 갱신
-    if teleportEnabled and teleportTarget then
-        if now - lastTeleTime >= TELE_INTERVAL then
-            lastTeleTime = now
-            local targetHead = teleportTarget:FindFirstChild("Head")
-            local targetHum  = teleportTarget:FindFirstChild("Humanoid")
-            if not targetHead or not targetHum or targetHum.Health <= 0 then
-                teleportEnabled = false
-                teleportTarget  = nil
-                if teleportBox then teleportBox.BackgroundColor3 = theme.boxOff end
-            else
-                local myChar = LocalPlayer.Character
-                if myChar and myChar:FindFirstChild("HumanoidRootPart") then
-                    myChar.HumanoidRootPart.CFrame = CFrame.new(targetHead.Position + Vector3.new(0, 13, 0))
-                end
-            end
-        end
-    end
-
-    -- Teleport Aim + Aimbot 탐색: AIM_INTERVAL마다만 Raycast·플레이어 루프 실행
-    if now - lastAimTime >= AIM_INTERVAL then
-        lastAimTime = now
-
-        if teleportAimEnabled and LocalPlayer.Character then
-            local targetChar = GetClosestEnemyForTeleportAim()
-            if targetChar then
-                local targetHead = targetChar:FindFirstChild("Head")
-                local targetHum  = targetChar:FindFirstChild("Humanoid")
-                if targetHead and targetHum and targetHum.Health > 0 then
-                    local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                    if myHRP then
-                        myHRP.CFrame = CFrame.new(FindClearPosition(targetHead.Position))
-                        local targetPos = targetHead.Position
-                        if targetChar:FindFirstChild("HumanoidRootPart") then
-                            targetPos = targetPos + (targetChar.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
-                        end
-                        local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
-                        if onScreen and screenPoint.Z > 0 then
-                            local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
-                            mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
-                        end
-                    end
-                end
-            end
-        end
-
-        -- 타겟 캐시 갱신 (무거운 루프는 여기서만)
-        if aimbotEnabled and not teleportEnabled and not teleportAimEnabled then
-            cachedTarget = GetClosestTarget()
-        end
-    end
-
-    -- Aimbot 마우스 이동: 캐시된 타겟으로 매 프레임 부드럽게 적용
-    if aimbotEnabled and not teleportEnabled and not teleportAimEnabled and cachedTarget then
-        local targetPos = cachedTarget.Position
-        if cachedTarget.Parent and cachedTarget.Parent:FindFirstChild("HumanoidRootPart") then
-            targetPos = targetPos + (cachedTarget.Parent.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
-        end
-        local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
-        if onScreen and screenPoint.Z > 0 then
-            local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
-            mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
-        end
-    end
-end)
-
--- ── 버튼 생성 ──
+-- ── 1단계: UI 먼저 전부 생성 (동기, 빠름) ──
 createSection("AIMBOT")
 local aimbotBox     = createCheckbox("Aimbot  [Q]")
 local triggerbotBox = createCheckbox("Triggerbot")
@@ -397,52 +278,46 @@ local function toggleWallAttack()
     wallAttackBox.BackgroundColor3 = wallAttackEnabled and theme.boxOn or theme.boxOff
     if wallAttackEnabled then
         task.spawn(function()
-            local WALL_INTERVAL = 0.1
-            local lastWallTime  = 0
             while wallAttackEnabled do
-                local now = tick()
-                if now - lastWallTime >= WALL_INTERVAL then
-                    lastWallTime = now
-                    pcall(function()
-                        local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
-                        if myHRP then
-                            local originalPos = myHRP.CFrame
-                            local target = GetClosestEnemy()
-                            if target then
-                                local targetHRP  = target:FindFirstChild("HumanoidRootPart")
-                                local targetHead = target:FindFirstChild("Head")
-                                if targetHRP and targetHead then
-                                    local dirs = {
-                                        Vector3.new(50,0,0), Vector3.new(-50,0,0),
-                                        Vector3.new(0,0,50), Vector3.new(0,0,-50),
-                                        Vector3.new(35,0,35), Vector3.new(-35,0,35),
-                                        Vector3.new(35,0,-35), Vector3.new(-35,0,-35)
-                                    }
-                                    local wallPos = targetHRP.Position + Vector3.new(0, 3, 0)
-                                    for _, dir in ipairs(dirs) do
-                                        local testPos = targetHRP.Position + dir
-                                        local wp = RaycastParams.new()
-                                        wp.FilterDescendantsInstances = {LocalPlayer.Character, target}
-                                        wp.FilterType = Enum.RaycastFilterType.Exclude
-                                        local wres = workspace:Raycast(testPos, Vector3.new(0, -5, 0), wp)
-                                        if wres then wallPos = testPos break end
-                                    end
-                                    myHRP.CFrame = CFrame.new(wallPos)
-                                    task.wait(0.05)
-                                    local screenPos, onScreen = Camera:WorldToScreenPoint(targetHead.Position)
-                                    if onScreen then
-                                        local delta = Vector2.new(screenPos.X, screenPos.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
-                                        mousemoverel(delta.X, delta.Y)
-                                        task.wait(0.02)
-                                    end
-                                    mouse1press() task.wait(0.05) mouse1release()
-                                    myHRP.CFrame = originalPos
+                pcall(function()
+                    local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                    if myHRP then
+                        local originalPos = myHRP.CFrame
+                        local target = GetClosestEnemy()
+                        if target then
+                            local targetHRP  = target:FindFirstChild("HumanoidRootPart")
+                            local targetHead = target:FindFirstChild("Head")
+                            if targetHRP and targetHead then
+                                local dirs = {
+                                    Vector3.new(50,0,0), Vector3.new(-50,0,0),
+                                    Vector3.new(0,0,50), Vector3.new(0,0,-50),
+                                    Vector3.new(35,0,35), Vector3.new(-35,0,35),
+                                    Vector3.new(35,0,-35), Vector3.new(-35,0,-35)
+                                }
+                                local wallPos = targetHRP.Position + Vector3.new(0, 3, 0)
+                                for _, dir in ipairs(dirs) do
+                                    local testPos = targetHRP.Position + dir
+                                    local wp = RaycastParams.new()
+                                    wp.FilterDescendantsInstances = {LocalPlayer.Character, target}
+                                    wp.FilterType = Enum.RaycastFilterType.Exclude
+                                    local wres = workspace:Raycast(testPos, Vector3.new(0, -5, 0), wp)
+                                    if wres then wallPos = testPos break end
                                 end
+                                myHRP.CFrame = CFrame.new(wallPos)
+                                task.wait(0.05)
+                                local screenPos, onScreen = Camera:WorldToScreenPoint(targetHead.Position)
+                                if onScreen then
+                                    local delta = Vector2.new(screenPos.X, screenPos.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
+                                    mousemoverel(delta.X, delta.Y)
+                                    task.wait(0.02)
+                                end
+                                mouse1press() task.wait(0.05) mouse1release()
+                                myHRP.CFrame = originalPos
                             end
                         end
-                    end)
-                end
-                RunService.Heartbeat:Wait() -- tick 낭비 없이 다음 프레임까지 대기
+                    end
+                end)
+                task.wait(0.1)
             end
         end)
     end
@@ -474,11 +349,121 @@ fastShotBox.MouseButton1Click:Connect(function()
                 if rawget(gcVal, "BladeCooldown") then gcVal["BladeCooldown"] = 0 end
             end
             count = count + 1
-            if count % 500 == 0 then
-                task.wait()
-            end
+            if count % 500 == 0 then task.wait() end
         end
         print("FastShot 적용 완료!")
+    end)
+end)
+
+-- ── 2단계: UI·연결이 전부 끝난 뒤 루프 시작 (비동기, 게임 안 멈춤) ──
+task.spawn(function()
+    -- Triggerbot 루프
+    local trigCooldown = false
+    RunService.Heartbeat:Connect(function()
+        if not triggerbotEnabled or trigCooldown then return end
+        local target = GetTargetUnderCrosshair()
+        if target then
+            trigCooldown = true
+            task.delay(TriggerbotSettings.Delay, function()
+                if triggerbotEnabled and GetTargetUnderCrosshair() then
+                    mouse1press()
+                    task.wait(0.05)
+                    mouse1release()
+                end
+                task.wait(0.05)
+                trigCooldown = false
+            end)
+        end
+    end)
+end)
+
+task.spawn(function()
+    -- Aimbot + Teleport 루프
+    local AIM_INTERVAL  = 0.05
+    local TELE_INTERVAL = 0.05
+    local lastAimTime   = 0
+    local lastTeleTime  = 0
+
+    RunService.RenderStepped:Connect(function()
+        if not aimbotEnabled and not teleportEnabled and not teleportAimEnabled then
+            fovCircle.Visible = false
+            return
+        end
+
+        local now = tick()
+
+        -- FOV 원: 매 프레임 갱신
+        if aimbotEnabled then
+            fovCircle.Visible = true
+            fovCircle.Position = Vector2.new(Mouse.X, Mouse.Y + 58)
+            fovCircle.Radius = AimbotSettings.FOV
+        else
+            fovCircle.Visible = false
+        end
+
+        -- Teleport to Enemy
+        if teleportEnabled and teleportTarget then
+            if now - lastTeleTime >= TELE_INTERVAL then
+                lastTeleTime = now
+                local targetHead = teleportTarget:FindFirstChild("Head")
+                local targetHum  = teleportTarget:FindFirstChild("Humanoid")
+                if not targetHead or not targetHum or targetHum.Health <= 0 then
+                    teleportEnabled = false
+                    teleportTarget  = nil
+                    teleportBox.BackgroundColor3 = theme.boxOff
+                else
+                    local myChar = LocalPlayer.Character
+                    if myChar and myChar:FindFirstChild("HumanoidRootPart") then
+                        myChar.HumanoidRootPart.CFrame = CFrame.new(targetHead.Position + Vector3.new(0, 13, 0))
+                    end
+                end
+            end
+        end
+
+        -- Teleport Aim + Aimbot 타겟 탐색
+        if now - lastAimTime >= AIM_INTERVAL then
+            lastAimTime = now
+
+            if teleportAimEnabled and LocalPlayer.Character then
+                local targetChar = GetClosestEnemyForTeleportAim()
+                if targetChar then
+                    local targetHead = targetChar:FindFirstChild("Head")
+                    local targetHum  = targetChar:FindFirstChild("Humanoid")
+                    if targetHead and targetHum and targetHum.Health > 0 then
+                        local myHRP = LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+                        if myHRP then
+                            myHRP.CFrame = CFrame.new(FindClearPosition(targetHead.Position))
+                            local targetPos = targetHead.Position
+                            if targetChar:FindFirstChild("HumanoidRootPart") then
+                                targetPos = targetPos + (targetChar.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
+                            end
+                            local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
+                            if onScreen and screenPoint.Z > 0 then
+                                local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
+                                mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
+                            end
+                        end
+                    end
+                end
+            end
+
+            if aimbotEnabled and not teleportEnabled and not teleportAimEnabled then
+                cachedTarget = GetClosestTarget()
+            end
+        end
+
+        -- Aimbot 마우스 이동: 캐시 타겟으로 매 프레임 부드럽게
+        if aimbotEnabled and not teleportEnabled and not teleportAimEnabled and cachedTarget then
+            local targetPos = cachedTarget.Position
+            if cachedTarget.Parent and cachedTarget.Parent:FindFirstChild("HumanoidRootPart") then
+                targetPos = targetPos + (cachedTarget.Parent.HumanoidRootPart.Velocity * AimbotSettings.Prediction)
+            end
+            local screenPoint, onScreen = Camera:WorldToScreenPoint(targetPos)
+            if onScreen and screenPoint.Z > 0 then
+                local delta = Vector2.new(screenPoint.X, screenPoint.Y + 58) - Vector2.new(Mouse.X, Mouse.Y + 58)
+                mousemoverel(delta.X * (1 - AimbotSettings.Smoothness), delta.Y * (1 - AimbotSettings.Smoothness))
+            end
+        end
     end)
 end)
 
