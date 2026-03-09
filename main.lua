@@ -187,14 +187,16 @@ for _, name in ipairs(tabNames) do
     end)
 end
 
--- ── FPS / Ping 업데이트 루프 (task.spawn + while true) ──
-task.spawn(function()
-    while true do
-        local fps = math.floor(1 / RunService.RenderStepped:Wait())
-        local ping = math.floor(LocalPlayer:GetNetworkPing() * 1000 + 0.5)
-        Stats.Text = "FPS: " .. fps .. "  |  Ping: " .. ping .. " ms"
-        task.wait(0.5)
-    end
+-- ── FPS / Ping 업데이트 (RenderStepped + throttle) ──
+-- 이벤트는 매 프레임 수신하되, 실제 텍스트 갱신은 STAT_INTERVAL마다만 실행
+local STAT_INTERVAL = 0.5
+local lastStatTime  = 0
+
+RunService.RenderStepped:Connect(function(deltaTime)
+    local now = tick()
+    if now - lastStatTime < STAT_INTERVAL then return end
+    lastStatTime = now
+    Stats.Text = "FPS: " .. math.floor(1 / deltaTime) .. "  |  Ping: " .. math.floor(LocalPlayer:GetNetworkPing() * 1000 + 0.5) .. " ms"
 end)
 
 -- ── 키 입력 처리 ──
@@ -235,9 +237,8 @@ LocalPlayer.CharacterRemoving:Connect(function()
 end)
 
 task.spawn(function()
-    -- 게임 완전 로드 대기
     game:GetService("ContentProvider"):PreloadAsync({workspace})
     task.wait(2)
     loadModule("Combat")
 end)
-print("Main 로드 완ㅇㄱㅎㅇㄱㅊㅎㅇㄱㅀㅇㄱㅀㅇㄱㅎㅇㄱ료!")
+print("Main 로드 완료!")
