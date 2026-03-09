@@ -1,5 +1,4 @@
 -- triggerbot.lua
-local RunService = game:GetService("RunService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
@@ -19,15 +18,13 @@ end
 
 local function GetTargetUnderCrosshair()
     if not LocalPlayer.Character then return nil end
-    local params = RaycastParams.new()
-    params.FilterDescendantsInstances = {LocalPlayer.Character}
-    params.FilterType = Enum.RaycastFilterType.Exclude
-    local result = workspace:Raycast(Camera.CFrame.Position, Camera.CFrame.LookVector * 500, params)
-    if result and result.Instance then
-        local player = Players:GetPlayerFromCharacter(result.Instance.Parent)
+    local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 500)
+    local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LocalPlayer.Character, Camera})
+    if hit then
+        local player = Players:GetPlayerFromCharacter(hit.Parent)
         if player and player ~= LocalPlayer and not ignoredPlayers[player.Name] then
             if checkTeam(player) then return nil end
-            local hum = result.Instance.Parent:FindFirstChild("Humanoid")
+            local hum = hit.Parent:FindFirstChild("Humanoid")
             if hum and hum.Health > 0 then return player end
         end
     end
@@ -40,21 +37,28 @@ local function toggleTriggerbot()
 end
 _G.toggleTriggerbot = toggleTriggerbot
 
-task.spawn(function()
-    local trigCooldown = false
-    while true do
-        task.wait(0.1)
-        if not triggerbotEnabled or trigCooldown then continue end
-        local target = GetTargetUnderCrosshair()
-        if not target then continue end
-        trigCooldown = true
-        task.delay(TriggerbotSettings.Delay, function()
-            if triggerbotEnabled and GetTargetUnderCrosshair() then
-                mouse1press() task.wait(0.05) mouse1release()
+spawn(function()
+    local isHolding = false
+    local currentTarget = nil
+    while wait(0.01) do
+        if triggerbotEnabled then
+            local target = GetTargetUnderCrosshair()
+            if target and target == currentTarget then
+                if not isHolding then mouse1press() isHolding = true end
+            else
+                if isHolding then mouse1release() isHolding = false end
+                currentTarget = target
+                if target then
+                    wait(TriggerbotSettings.Delay)
+                    if triggerbotEnabled and GetTargetUnderCrosshair() == target then
+                        mouse1press() isHolding = true
+                    end
+                end
             end
-            task.wait(0.05)
-            trigCooldown = false
-        end)
+        else
+            if isHolding then mouse1release() isHolding = false end
+            currentTarget = nil
+        end
     end
 end)
 
