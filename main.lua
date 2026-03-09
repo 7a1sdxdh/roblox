@@ -245,6 +245,8 @@ LocalPlayer.CharacterRemoving:Connect(function()
 end)
 
 -- _G.Pages 다 채운 뒤에 Combat 로드
-loadModule("Combat")
+task.delay(0.5, function()
+    loadModule("Combat")
+end)
 
 print("Main 로드 완료!")
