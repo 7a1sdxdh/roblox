@@ -207,7 +207,7 @@ end)
 MainFrame.Visible = false
 
 local combatModules = {
-    "combat", "triggerbot", "teleport",
+    "combat", "triggerbot", "teleport", "fastshot",
 }
 
 local loadingFrame = Instance.new("Frame")
